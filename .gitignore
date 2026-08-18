@@ -136,3 +136,11 @@ paper/*.log
 paper/*.out
 paper/*.synctex.gz
 paper/*.toc
+
+# Private download scripts & credentials
+scripts/ff_*.py
+scripts/*faceforensics_download*.py
+scripts/download_ff.py
+.env*
+*.env
+

@@ -289,14 +289,15 @@ Spatiotemporal_Deepfake_Detection/
 </table>
 
 ### [DAEMON] Sleep-Resistant Ingestion Process:
-Use <kbd>Ctrl</kbd> + <kbd>C</kbd> to pause at any time; restarting automatically resumes without loss:
+Per FaceForensics++ Terms of Service, obtain your official download link from [TUM FaceForensics](https://github.com/ondyari/FaceForensics) and provide it via `--server_url`, `FF_SERVER_URL` env variable, or interactive prompt:
 ```bash
 # Ingest full FaceForensics++ HQ (c23) in background (prevents PC from sleeping):
-python scripts/download_faceforensics.py data/FaceForensics++ -d all -c c23 -t videos
+python scripts/download_faceforensics.py data/FaceForensics++ -d all -c c23 -t videos --server_url <YOUR_TUM_URL>
 
-# Or test a 10-video sample in seconds:
-python scripts/download_faceforensics.py data/FaceForensics++ -d all -c c23 -t videos -n 10
+# Or set environment variable once:
+# $env:FF_SERVER_URL="<YOUR_TUM_URL>"
 ```
+Use <kbd>Ctrl</kbd> + <kbd>C</kbd> to pause at any time; restarting automatically resumes from where it stopped.
 
 ---
 

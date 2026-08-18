@@ -87,24 +87,35 @@ def parse_args():
     parser.add_argument('-t', '--type', type=str, default='videos',
                         help='File type: videos, masks, models.',
                         choices=TYPE)
-    parser.add_argument('-n', '--num_videos', type=int, default=None,
-                        help='Select number of videos to download.')
+    parser.add_argument('--server_url', type=str, default=os.getenv('FF_SERVER_URL', None),
+                        help='Official FaceForensics download server URL (provided upon submitting TUM request form).')
     parser.add_argument('--server', type=str, default='EU',
-                        help='Server mirror to download from.',
-                        choices=SERVERS)
+                        help='Server mirror region identifier (EU / CA / custom).')
     parser.add_argument('--yes', '-y', action='store_true',
                         help='Automatically accept terms without prompting.')
     args = parser.parse_args()
 
-    server = args.server
-    if server == 'EU':
-        server_url = 'http://canis.vc.in.tum.de:8100/'
-    elif server == 'EU2':
-        server_url = 'http://kaldir.vc.in.tum.de/faceforensics/'
-    elif server == 'CA':
-        server_url = 'http://falas.cmpt.sfu.ca:8100/'
-    else:
-        raise ValueError(f'Invalid server: {server}')
+    server_url = args.server_url
+    if not server_url:
+        # Prompt user to respect FaceForensics Terms of Service and protect private server endpoints
+        print("\n" + "="*75)
+        print("[!] FaceForensics++ Terms of Service Compliance Check:")
+        print("    In accordance with the FaceForensics research agreement, server endpoints")
+        print("    must not be hardcoded in public repositories.")
+        print("    Please request access at: https://github.com/ondyari/FaceForensics")
+        print("="*75)
+        try:
+            server_url = input("\n[?] Enter the FaceForensics server base URL received from TUM: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            server_url = None
+
+        if not server_url:
+            print("\n[!] Error: No server URL provided. You can set the FF_SERVER_URL environment variable")
+            print("    or pass --server_url <URL> when running this script.")
+            sys.exit(1)
+
+    if not server_url.endswith('/'):
+        server_url += '/'
 
     args.tos_url = server_url + 'webpage/FaceForensics_TOS.pdf'
     args.base_url = server_url + 'v3/'

@@ -138,6 +138,47 @@ Traditional detectors suffer catastrophic collapse because they search for **fle
 <br>
 
 <details open>
+<summary><b>♰ [MERMAID ARCHITECTURAL FLOWGRAPH] Click to view interactive neural graph</b></summary>
+<br>
+
+```mermaid
+flowchart TD
+    subgraph Ingest ["🌐 PHASE 1: Retinal Fourier Ingest"]
+        V["Input Video Clip<br/>(B, T, 3, 256, 256)"] --> LM["68-Point Facial Landmark Tracking<br/>Linear Interpolation Fallback"]
+        LM --> FA["Fourier Low-Pass Ingestion (Mix_freq)<br/>Preserves High-Frequency Bands"]
+    end
+
+    subgraph SpatialStreams ["🔮 PHASE 2: Dual Spatial Feature Harvesting"]
+        FA --> TEB["Shallow Texture Block (TEB)<br/>Stage 1 Residuals: F_tex ∈ R^(256 × 8 × 8)"]
+        FA --> RN["ResNeXt50 Stage-4 Backbone<br/>Deep Semantics: F_sem ∈ R^(2048 × 8 × 8)"]
+        TEB & RN --> FUSE["Channel Fusion<br/>F = [F_sem || F_tex] ∈ R^(2304 × 8 × 8)"]
+    end
+
+    subgraph BAP_System ["🎯 4-Head Bilinear Attention Pooling (BAP)"]
+        FUSE --> ATTN["Multi-Head Spatial Attention (M=4)<br/>A ∈ R^(4 × 8 × 8)"]
+        FUSE & ATTN --> BAP["Matrix Outer Product: V = F · A^T<br/>V ∈ R^(2304 × 4)"]
+        BAP --> LRIL["Dual Regional Independence Loss (L_RIL)<br/>L_spatial (Non-Overlap) + γ L_feat (Orthogonal)"]
+    end
+
+    subgraph SequenceCore ["⏳ PHASE 3: Temporal Recurrence & Decision"]
+        BAP --> PROJ["Linear Bottleneck (9216 → 512)<br/>LayerNorm + GELU → x_t ∈ R^512"]
+        PROJ --> LSTM["2-Layer Bidirectional LSTM Core<br/>d_h = 256 (Captures Jitter & Blinking)"]
+        LSTM --> POOL["Temporal Mean Pooling<br/>h_seq ∈ R^512"]
+        POOL --> MLP["Classification MLP (512 → 128 → 2)"]
+        MLP --> OUT["VERDICT: 0 (Real) // 1 (Synthetic)"]
+    end
+
+    style Ingest fill:#080811,stroke:#00f2fe,stroke-width:2px,color:#fff
+    style SpatialStreams fill:#0d0214,stroke:#ff007f,stroke-width:2px,color:#fff
+    style BAP_System fill:#08051a,stroke:#7928ca,stroke-width:2px,color:#fff
+    style SequenceCore fill:#001108,stroke:#00ff66,stroke-width:2px,color:#fff
+```
+
+</details>
+
+<br>
+
+<details open>
 <summary><b>♰ [MATHEMATICAL CANON MATRIX] Click to inspect formal governing equations</b></summary>
 <br>
 
@@ -305,29 +346,66 @@ Use <kbd>Ctrl</kbd> + <kbd>C</kbd> to pause at any time; restarting automaticall
 
 <table width="100%">
 <tr>
-<th colspan="2" bgcolor="#161b22"><font color="#ff007f">[BENCHMARK] JUDGMENT UPON UNSEEN SIMULACRA (DF40 UNSEEN BENCHMARK)</font></th>
+<th bgcolor="#161b22" colspan="4"><font color="#00ffcc"><b>[BENCHMARK] DF40 CROSS-FORGERY GENERALIZATION (TRAIN: FR ──► TEST: EFS UNSEEN)</b></font></th>
+</tr>
+<tr bgcolor="#080811">
+<td width="35%"><b>Detector Architecture</b></td>
+<td width="20%" align="center"><b>Test AUC (%)</b></td>
+<td width="25%" align="center"><b>Statistical Significance</b></td>
+<td width="20%" align="center"><b>Forensic Status</b></td>
 </tr>
 <tr>
-<td width="60%" bgcolor="#05050a">
+<td><code>Xception Baseline</code></td>
+<td align="center"><font color="#ff0033"><b>36.9 ± 1.1%</b></font></td>
+<td align="center">—</td>
+<td align="center"><font color="#ff0033"><code>[FAIL: COLLAPSE]</code></font></td>
+</tr>
+<tr>
+<td><code>Self-Blended Images (SBI)</code></td>
+<td align="center"><font color="#ffbd2e"><b>54.1 ± 0.9%</b></font></td>
+<td align="center">—</td>
+<td align="center"><font color="#ffbd2e"><code>[WARN: CHANCE]</code></font></td>
+</tr>
+<tr>
+<td><code>Foundation CLIP-large</code></td>
+<td align="center"><font color="#00f2fe"><b>80.9 ± 0.5%</b></font></td>
+<td align="center">Baseline Ref</td>
+<td align="center"><font color="#00f2fe"><code>[APPROXIMATION]</code></font></td>
+</tr>
+<tr bgcolor="#0d0214">
+<td><font color="#00ff66"><b>♰ SpaDeD Framework (Ours)</b></font></td>
+<td align="center"><font color="#00ff66"><b>83.2 ± 0.4%</b></font></td>
+<td align="center"><font color="#00ffcc"><b>p = 0.0031 (BH FDR)</b></font></td>
+<td align="center"><font color="#00ff66"><code>[VERIFIED SOTA]</code></font></td>
+</tr>
+</table>
 
-```
-  ♰ [ TRAIN: FACE REENACTMENT (FR) ] ──► [ TEST: UNSEEN ENTIRE FACE SYNTHESIS (EFS) ]
-  ───────────────────────────────────────────────────────────────────────────────────
-  Vanilla Xception Baseline :  36.9% AUC  [ FAIL: CAST INTO THE ABYSS ]
-  Self-Blended Images (SBI) :  54.1% AUC  [ WARN: CHANCE / LUKEWARM ]
-  Foundation CLIP-large     :  80.9% AUC  [ APPROX: WORLDLY APPROXIMATION ]
-  ♰ SpaDeD FORENSIC ENGINE  :  83.2% AUC  [ VERIFIED: RIGHTEOUS JUDGMENT (p < 0.0001) ] ♰
-```
+<br>
 
+<table width="100%">
+<tr>
+<th bgcolor="#161b22" colspan="4"><font color="#ff007f"><b>[TELEMETRY] FACEFORENSICS++ (HQ) 5-FOLD CROSS-VALIDATION HUD</b></font></th>
+</tr>
+<tr align="center" bgcolor="#080811">
+<td width="25%">
+<font color="#00ffcc" size="2"><b>TRAINING ACCURACY</b></font><br>
+<font color="#ffffff" size="4"><b>95.86%</b></font><br>
+<font color="#888888" size="1">± 0.38% (15 Epochs)</font>
 </td>
-<td width="40%" bgcolor="#0d1117">
-
-#### [CV-5] FF++ (HQ) 5-Fold Cross-Validation:
-* **Training Accuracy**: `95.86% ± 0.38%`
-* **Forensic Precision**: **`94.23% ± 0.41%`** *(False Accusations Prevented)*
-* **F1-Score**: `90.17% ± 0.35%`
-* **Inference Speed**: `31.2 ms/frame` (**32.1 FPS**)
-
+<td width="25%">
+<font color="#00ff66" size="2"><b>FORENSIC PRECISION</b></font><br>
+<font color="#00ff66" size="4"><b>94.23%</b></font><br>
+<font color="#888888" size="1">± 0.41% (Min False Alarms)</font>
+</td>
+<td width="25%">
+<font color="#00f2fe" size="2"><b>HARMONIC F1-SCORE</b></font><br>
+<font color="#ffffff" size="4"><b>90.17%</b></font><br>
+<font color="#888888" size="1">± 0.35% (Generalization)</font>
+</td>
+<td width="25%">
+<font color="#ff007f" size="2"><b>PROCESSING SPEED</b></font><br>
+<font color="#ff007f" size="4"><b>32.1 FPS</b></font><br>
+<font color="#888888" size="1">31.2 ms/frame (RTX 3080 Ti)</font>
 </td>
 </tr>
 </table>

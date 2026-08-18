@@ -1,0 +1,199 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300" width="600" height="300">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="voidChassis" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#14001f"/>
+      <stop offset="45%" stop-color="#05000a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Predator Triangle Core Gradient -->
+    <radialGradient id="triCoreGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="25%" stop-color="#ff0033"/>
+      <stop offset="60%" stop-color="#ff007f"/>
+      <stop offset="85%" stop-color="#7928ca"/>
+      <stop offset="100%" stop-color="#0a0014"/>
+    </radialGradient>
+
+    <!-- Up/Down Scanner Bar Beam Gradient -->
+    <linearGradient id="scanBarBeam" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#00f2fe" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#00ffff" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#ff007f" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Hexagon Matrix Pattern -->
+    <pattern id="geomGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 10 0 L 20 5 L 20 15 L 10 20 L 0 15 L 0 5 Z" fill="none" stroke="#7928ca" stroke-width="0.6" stroke-opacity="0.25"/>
+    </pattern>
+
+    <!-- CRT Scanlines -->
+    <pattern id="crtLines" width="100" height="4" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="100" y2="0" stroke="#00ffff" stroke-width="1" stroke-opacity="0.08"/>
+    </pattern>
+  </defs>
+
+  <!-- ==================== TERMINAL HOUSING FRAME ==================== -->
+  <rect x="2" y="2" width="596" height="296" rx="8" fill="url(#voidChassis)" stroke="#7928ca" stroke-width="2"/>
+  <rect x="6" y="6" width="588" height="288" rx="6" fill="none" stroke="#00f2fe" stroke-width="0.8" stroke-opacity="0.4"/>
+  <rect x="8" y="8" width="584" height="284" fill="url(#geomGrid)"/>
+
+  <!-- Matrix Rainfall Streams (Flanking Left & Right) -->
+  <g font-family="Courier, monospace" font-size="8.5" fill="#00ff66" letter-spacing="1.5">
+    <g>
+      <text x="16" y="40">010110</text>
+      <text x="16" y="56" fill="#00f2fe">HYPER_BAP</text>
+      <text x="16" y="72">x²/a²-y²/b²=1</text>
+      <text x="16" y="88">0x1637</text>
+      <text x="16" y="104" fill="#ff007f">TARGET_KILL</text>
+      <text x="16" y="120">011010</text>
+      <animateTransform attributeName="transform" type="translate" values="0 -60; 0 180" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0; 0.9; 0.9; 0" dur="4s" repeatCount="indefinite"/>
+    </g>
+    <g>
+      <text x="505" y="40">110101</text>
+      <text x="505" y="56" fill="#ff0033">ASYMPTOTIC</text>
+      <text x="505" y="72">DF40:83.2%</text>
+      <text x="505" y="88" fill="#00f2fe">ANGULAR_LOCK</text>
+      <text x="505" y="104">BIOMETRIC</text>
+      <text x="505" y="120">001101</text>
+      <animateTransform attributeName="transform" type="translate" values="0 -80; 0 160" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0; 0.85; 0.85; 0" dur="5s" repeatCount="indefinite"/>
+    </g>
+  </g>
+
+  <!-- Top Terminal Header Bar -->
+  <path d="M 6 26 L 594 26" stroke="#1f2430" stroke-width="1.5"/>
+  <circle cx="18" cy="16" r="3.5" fill="#ff0033"/>
+  <circle cx="28" cy="16" r="3.5" fill="#ffbd2e"/>
+  <circle cx="38" cy="16" r="3.5" fill="#00ff66"/>
+  <text x="52" y="19" font-family="Courier, monospace" font-size="9" fill="#00ffcc" font-weight="bold">
+    [PREDATOR_OCULAR_ARRAY // GEOMETRIC_HYPERBOLA_CORE // SCANNING EXISTENCE]
+  </text>
+  <text x="470" y="19" font-family="Courier, monospace" font-size="9" fill="#ff0033" font-weight="bold">
+    LOCK: ZERO ESCAPE
+  </text>
+
+  <!-- ==================== AGGRESSIVE GEOMETRIC PREDATOR OCULAR CONSTRUCT ==================== -->
+  <g id="predatorArray">
+
+    <!-- Center Connecting Asymptote Line & Focus Reticle -->
+    <line x1="120" y1="145" x2="480" y2="145" stroke="#ff007f" stroke-width="0.8" stroke-dasharray="8 4 2 4" stroke-opacity="0.7"/>
+    <circle cx="300" cy="145" r="4" fill="none" stroke="#00ffff" stroke-width="1.5"/>
+    <polygon points="300,136 305,145 300,154 295,145" fill="#ff0033"/>
+
+    <!-- ==================== LEFT EYE: TRIANGLE & HYPERBOLA MATRIX ==================== -->
+    <!-- Outer Inverted Predator Triangle Frame -->
+    <polygon points="90,95 270,120 180,215" fill="#07000e" stroke="#7928ca" stroke-width="2"/>
+    <polygon points="105,102 255,123 180,198" fill="#12001a" stroke="#ff0033" stroke-width="1.5"/>
+    <polygon points="120,110 240,126 180,182" fill="url(#triCoreGrad)" stroke="#00f2fe" stroke-width="1"/>
+
+    <!-- Nested Sharp Triangular Slit Aperture -->
+    <polygon points="175,125 185,125 180,165" fill="#ffffff"/>
+    <line x1="180" y1="110" x2="180" y2="180" stroke="#00ffff" stroke-width="1.5"/>
+
+    <!-- Hyperbolic Curvature Wings Slicing Left Eye -->
+    <g fill="none" stroke-width="1.2">
+      <!-- Upper & Lower Hyperbolic Conjugates -->
+      <path d="M 80,75 Q 150,145 80,215" stroke="#00ffff" stroke-opacity="0.85"/>
+      <path d="M 100,85 Q 165,145 100,205" stroke="#ff007f" stroke-opacity="0.75"/>
+      <path d="M 120,95 Q 175,145 120,195" stroke="#ff0033" stroke-opacity="0.85"/>
+      
+      <!-- Right-Facing Opposing Hyperbolic Arcs -->
+      <path d="M 280,75 Q 210,145 280,215" stroke="#00ffff" stroke-opacity="0.85"/>
+      <path d="M 260,85 Q 195,145 260,205" stroke="#ff007f" stroke-opacity="0.75"/>
+      <path d="M 240,95 Q 185,145 240,195" stroke="#ff0033" stroke-opacity="0.85"/>
+      
+      <!-- Horizontal Hyperbolic Focal Crosshairs -->
+      <path d="M 140,65 Q 180,120 220,65" stroke="#00ff66" stroke-dasharray="4 3" stroke-opacity="0.6"/>
+      <path d="M 140,225 Q 180,170 220,225" stroke="#00ff66" stroke-dasharray="4 3" stroke-opacity="0.6"/>
+      <animate attributeName="stroke-opacity" values="0.6; 1; 0.6" dur="2s" repeatCount="indefinite"/>
+    </g>
+
+    <!-- Left Angular Target Reticles -->
+    <line x1="180" y1="70" x2="180" y2="220" stroke="#ff007f" stroke-width="0.8" stroke-dasharray="6 3"/>
+    <circle cx="180" cy="145" r="45" fill="none" stroke="#00f2fe" stroke-width="0.8" stroke-dasharray="14 6" stroke-opacity="0.6">
+      <animateTransform attributeName="transform" type="rotate" from="0 180 145" to="360 180 145" dur="14s" repeatCount="indefinite"/>
+    </circle>
+
+
+    <!-- ==================== RIGHT EYE: TRIANGLE & HYPERBOLA MATRIX ==================== -->
+    <!-- Outer Inverted Predator Triangle Frame (Mirrored) -->
+    <polygon points="510,95 330,120 420,215" fill="#07000e" stroke="#7928ca" stroke-width="2"/>
+    <polygon points="495,102 345,123 420,198" fill="#12001a" stroke="#ff0033" stroke-width="1.5"/>
+    <polygon points="480,110 360,126 420,182" fill="url(#triCoreGrad)" stroke="#00f2fe" stroke-width="1"/>
+
+    <!-- Nested Sharp Triangular Slit Aperture -->
+    <polygon points="415,125 425,125 420,165" fill="#ffffff"/>
+    <line x1="420" y1="110" x2="420" y2="180" stroke="#00ffff" stroke-width="1.5"/>
+
+    <!-- Hyperbolic Curvature Wings Slicing Right Eye -->
+    <g fill="none" stroke-width="1.2">
+      <!-- Left-Facing Hyperbolic Arcs -->
+      <path d="M 320,75 Q 390,145 320,215" stroke="#00ffff" stroke-opacity="0.85"/>
+      <path d="M 340,85 Q 405,145 340,205" stroke="#ff007f" stroke-opacity="0.75"/>
+      <path d="M 360,95 Q 415,145 360,195" stroke="#ff0033" stroke-opacity="0.85"/>
+
+      <!-- Right-Facing Opposing Hyperbolic Arcs -->
+      <path d="M 520,75 Q 450,145 520,215" stroke="#00ffff" stroke-opacity="0.85"/>
+      <path d="M 500,85 Q 435,145 500,205" stroke="#ff007f" stroke-opacity="0.75"/>
+      <path d="M 480,95 Q 425,145 480,195" stroke="#ff0033" stroke-opacity="0.85"/>
+
+      <!-- Horizontal Hyperbolic Focal Crosshairs -->
+      <path d="M 380,65 Q 420,120 460,65" stroke="#00ff66" stroke-dasharray="4 3" stroke-opacity="0.6"/>
+      <path d="M 380,225 Q 420,170 460,225" stroke="#00ff66" stroke-dasharray="4 3" stroke-opacity="0.6"/>
+      <animate attributeName="stroke-opacity" values="0.6; 1; 0.6" dur="2s" repeatCount="indefinite"/>
+    </g>
+
+    <!-- Right Angular Target Reticles -->
+    <line x1="420" y1="70" x2="420" y2="220" stroke="#ff007f" stroke-width="0.8" stroke-dasharray="6 3"/>
+    <circle cx="420" cy="145" r="45" fill="none" stroke="#00f2fe" stroke-width="0.8" stroke-dasharray="14 6" stroke-opacity="0.6">
+      <animateTransform attributeName="transform" type="rotate" from="0 420 145" to="-360 420 145" dur="14s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Sharp Angular Biometric Corner Brackets -->
+    <g stroke="#00ffff" stroke-width="1.8" fill="none">
+      <path d="M 70 85 L 50 85 L 50 115"/>
+      <path d="M 50 175 L 50 205 L 70 205"/>
+      <path d="M 530 85 L 550 85 L 550 115"/>
+      <path d="M 550 175 L 550 205 L 530 205"/>
+    </g>
+  </g>
+
+  <!-- ==================== CONTINUOUS UP/DOWN SCANNER BAR BEAM (SMIL) ==================== -->
+  <g>
+    <!-- Wide Laser Scanning Beam -->
+    <polygon points="6,-18 594,-18 594,18 6,18" fill="url(#scanBarBeam)"/>
+    <!-- Intense Cutting Laser Line -->
+    <line x1="6" y1="0" x2="594" y2="0" stroke="#00ffff" stroke-width="2.2" stroke-opacity="0.95"/>
+    <line x1="120" y1="0" x2="480" y2="0" stroke="#ffffff" stroke-width="1"/>
+    <!-- Scanner Bar HUD Coordinate Marker -->
+    <circle cx="45" cy="0" r="3" fill="#ff0033"/>
+    <circle cx="555" cy="0" r="3" fill="#ff0033"/>
+    
+    <!-- SMIL Up/Down Translation Animation (100% Browser/Markdown Supported) -->
+    <animateTransform 
+      attributeName="transform" 
+      type="translate" 
+      values="0 30; 0 260; 0 30" 
+      keyTimes="0; 0.5; 1" 
+      dur="2.8s" 
+      repeatCount="indefinite"/>
+  </g>
+
+  <!-- CRT Scanlines Overlay -->
+  <rect x="6" y="26" width="588" height="242" fill="url(#crtLines)" pointer-events="none"/>
+
+  <!-- Bottom Telemetry HUD Line -->
+  <rect x="6" y="268" width="588" height="24" fill="#090010"/>
+  <path d="M 6 268 L 594 268" stroke="#7928ca" stroke-width="1.2"/>
+  <text x="14" y="283" font-family="Courier, monospace" font-size="9" fill="#00ffcc">
+    [HYPERBOLIC_SCAN: UP_DOWN // FOCAL_COORDINATES: (±a·secθ, b·tanθ) // BIOMETRIC_PENETRATION: 100%]
+  </text>
+  <text x="495" y="283" font-family="Courier, monospace" font-size="9" fill="#ff0033" font-weight="bold">
+    ♠ SpaDeD PREDATOR ♠
+  </text>
+</svg>

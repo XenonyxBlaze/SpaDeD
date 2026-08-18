@@ -284,7 +284,7 @@ bash scripts/download_faceforensics.sh data/FaceForensics++ EU2 c23 all
 ### 3. Google Colab / Cloud GPU Training (Google AI Pro 2TB Drive):
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/XenonyxBlaze/spaded/blob/main/notebooks/train_spaded_colab.ipynb)
 
-* Open [`notebooks/train_spaded_colab.ipynb`](file:///c:/Users/ServeSmile%20IT/Projects/Spatiotemporal_Deepfake_Detection/notebooks/train_spaded_colab.ipynb) in Google Colab.
+* Open [`notebooks/train_spaded_colab.ipynb`](https://github.com/XenonyxBlaze/spaded/blob/main/notebooks/train_spaded_colab.ipynb) in Google Colab.
 * Mount your Google Drive with 1-click.
 * Run 5-fold cross-validation with automatic checkpoint mirroring back to `My Drive/SpaDeD_Checkpoints/`.
 

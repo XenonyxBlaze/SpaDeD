@@ -158,6 +158,22 @@ def parse_args():
     return args
 
 
+def fetch_json_with_retry(url: str, max_retries: int = 5, timeout=(30, 90)):
+    """Fetches JSON metadata with exponential backoff retry for slow/overloaded mirrors."""
+    for attempt in range(1, max_retries + 1):
+        try:
+            resp = requests.get(url, timeout=timeout)
+            resp.raise_for_status()
+            return resp.json()
+        except (requests.RequestException, ValueError) as e:
+            if attempt < max_retries:
+                wait_time = attempt * 3
+                print(f"[!] Metadata fetch notice (attempt {attempt}/{max_retries}): {e}. Retrying in {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise RuntimeError(f"Failed to fetch metadata from {url} after {max_retries} attempts: {e}")
+
+
 def download_file_resumable(url: str, out_file: str, desc: str = "", max_retries: int = 5):
     """
     Robust chunked file downloader with:
@@ -183,14 +199,14 @@ def download_file_resumable(url: str, out_file: str, desc: str = "", max_retries
             if initial_bytes > 0:
                 headers['Range'] = f'bytes={initial_bytes}-'
 
-            response = requests.get(url, headers=headers, stream=True, timeout=(15, 60))
+            response = requests.get(url, headers=headers, stream=True, timeout=(30, 120))
 
             if response.status_code == 416:  # Range not satisfiable, file might already be complete
                 if os.path.isfile(temp_file):
                     os.replace(temp_file, out_file)
                     return True
                 initial_bytes = 0
-                response = requests.get(url, stream=True, timeout=(15, 60))
+                response = requests.get(url, stream=True, timeout=(30, 120))
 
             if response.status_code not in (200, 206):
                 if response.status_code == 404:
@@ -293,18 +309,15 @@ def main(args):
                 )
                 continue
 
-            # Fetch filelist from server
+            # Fetch filelist from server with retry
             if 'DeepFakeDetection' in dataset_path or 'actors' in dataset_path:
-                resp = requests.get(args.base_url + DEEPFEAKES_DETECTION_URL, timeout=15)
-                filepaths = resp.json()
+                filepaths = fetch_json_with_retry(args.base_url + DEEPFEAKES_DETECTION_URL)
                 filelist = filepaths['actors'] if 'actors' in dataset_path else filepaths['DeepFakesDetection']
             elif 'original' in dataset_path:
-                resp = requests.get(args.base_url + FILELIST_URL, timeout=15)
-                file_pairs = resp.json()
+                file_pairs = fetch_json_with_retry(args.base_url + FILELIST_URL)
                 filelist = [item for pair in file_pairs for item in pair]
             else:
-                resp = requests.get(args.base_url + FILELIST_URL, timeout=15)
-                file_pairs = resp.json()
+                file_pairs = fetch_json_with_retry(args.base_url + FILELIST_URL)
                 filelist = []
                 for pair in file_pairs:
                     filelist.append('_'.join(pair))

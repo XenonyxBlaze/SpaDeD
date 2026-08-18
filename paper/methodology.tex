@@ -1,0 +1,305 @@
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{Overview of the Proposed Spatiotemporal Framework}
+The design of this architecture addresses the primary vulnerabilities of existing deepfake detectors: susceptibility to unseen generator artifacts due to global feature pooling and insensitivity to inter-frame temporal incoherence. The framework operates across three coordinated phases: Preprocessing and Data Standardization (Phase 1), Spatial Feature Extraction with Texture Enhancement and Multi-Attentional Bilinear Pooling (Phase 2), and Temporal Sequence Modeling with Classification (Phase 3). The spatial stage leverages a ResNeXt50 convolutional neural network augmented with a shallow Texture Enhancement Block (TEB) and multi-head attention inspired by fine-grained visual classification \citep{Zhao2021MultiAttentional}. The temporal stage utilizes a multi-layer Long Short-Term Memory (LSTM) network to capture dynamic transition anomalies across sequential frames \citep{Jugade2026SpatialTemporal}.
+
+\begin{figure}[ht]
+    \centering
+    \resizebox{\textwidth}{!}{
+
+\begin{tikzpicture}[
+    node distance=1.2cm and 1.2cm,
+    font=\sffamily\scriptsize,
+    process/.style={
+        rectangle,
+        minimum width=2.0cm,
+        minimum height=0.8cm,
+        text centered,
+        draw=black,
+        fill=blue!10,
+        rounded corners
+    },
+    io/.style={
+        trapezium,
+        trapezium left angle=70,
+        trapezium right angle=110,
+        minimum width=1.5cm,
+        minimum height=0.8cm,
+        text centered,
+        draw=black,
+        fill=orange!10
+    },
+    arrow/.style={thick, -{Stealth[length=2mm]}},
+    label/.style={font=\tiny\itshape, text=darkgray, align=center}
+]
+
+    \node (input) [io] {Input Video / Sequence};
+    \node (frames) [process, right=0.6cm of input] {Frame Extraction};
+    \node (detect) [process, right=0.6cm of frames] {Face Detect};
+    \node (align) [process, right=0.6cm of detect] {Alignment ($256^2$)};
+
+    \node [fit=(input) (align), draw=gray, dashed, inner sep=0.2cm, label={above:\textbf{Phase 1: Preprocessing \& Standardization}}] (box_pre) {};
+
+    \node (split) [coordinate, below=1.0cm of align] {};
+
+    \node (texture) [process, left=1.0cm of split, fill=purple!10] {Texture Enh. (TEB)};
+    \node (cnn) [process, right=1.0cm of split, fill=cyan!10] {ResNeXt50 Backbone};
+
+    \node (attention) [process, below=0.8cm of cnn, fill=cyan!10] {Multi-Head Attn ($M=4$)};
+
+    \node (bap) [process, below=2.5cm of split, fill=yellow!10, minimum width=3.2cm] {Bilinear Attention Pooling};
+
+    \node [fit=(texture) (cnn) (attention) (bap), draw=gray, dashed, inner sep=0.2cm, label={left:\textbf{Phase 2: Spatial Analysis}}] (box_spatial) {};
+
+    \node (features) [process, below=1.0cm of bap] {Bottleneck Proj. ($x_t$)};
+    \node (lstm) [process, right=0.8cm of features, fill=red!10] {BiLSTM ($T=20$)};
+    \node (fc) [process, right=0.8cm of lstm] {MLP Classifier};
+    \node (output) [io, right=0.8cm of fc] {Real / Fake};
+
+    \node [fit=(features) (output), draw=gray, dashed, inner sep=0.2cm, label={below:\textbf{Phase 3: Temporal Sequence Modeling}}] (box_temporal) {};
+
+    \draw [arrow] (input) -- (frames);
+    \draw [arrow] (frames) -- (detect);
+    \draw [arrow] (detect) -- (align);
+
+    \draw [arrow] (align) -- (split);
+    \draw [arrow] (split) -| (texture.north);
+    \draw [arrow] (split) -| (cnn.north);
+
+    \draw [arrow] (cnn) -- (attention);
+
+    \draw [arrow] (texture) |- (bap);
+    \draw [arrow] (attention) |- (bap);
+
+    \draw [arrow] (bap) -- (features);
+    \draw [arrow] (features) -- (lstm);
+    \draw [arrow] (lstm) -- (fc);
+    \draw [arrow] (fc) -- (output);
+
+\end{tikzpicture}}
+    \caption{Proposed Spatiotemporal Architecture. Shallow texture cues ($F_{tex}$) and deep semantic features ($F_{sem}$) are fused and pooled via multi-head Bilinear Attention Pooling before linear bottleneck projection into the temporal LSTM sequence pipeline \citep{Zhao2021MultiAttentional, Jugade2026SpatialTemporal}.}
+    \label{fig:architecture}
+\end{figure}
+
+\subsection{Data Preparation and Experimental Protocols}
+
+\subsubsection{The DF40 Benchmark and Category Structure}
+Model training and cross-forgery evaluation are performed using the DF40 benchmark \citep{Yan2024DF40}, which standardizes 40 advanced deepfake generation techniques categorized into four distinct manipulation paradigms:
+\begin{enumerate}
+    \item \textbf{Face Swapping (FS, 10 methods):} Transfers identity from a source to a target face while preserving target pose and lighting (e.g., SimSwap, InSwapper, FaceShifter, FSGAN).
+    \item \textbf{Face Reenactment (FR, 13 methods):} Transfers facial expressions, head pose, or lip movements from a driving source to a target subject (e.g., Wav2Lip, SadTalker, Face2Face, NeuralTextures).
+    \item \textbf{Entire Face Synthesis (EFS, 12 methods):} Synthesizes non-existent, photorealistic facial imagery unconditionally or from text prompts (e.g., StyleGAN2, StyleGAN3, Stable Diffusion v2.1, SD-XL, DiT).
+    \item \textbf{Face Editing (FE, 5 methods):} Modifies specific semantic facial attributes such as age, hair color, or emotion (e.g., StarGAN, StyleCLIP, e4e).
+\end{enumerate}
+
+\begin{table}[ht]
+    \centering
+    \caption{Summary of Deepfake Generator Paradigms in DF40 \citep{Yan2024DF40}}
+    \label{tab:df40_methods}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|c|l}
+        \toprule
+        \textbf{Category} & \textbf{Count} & \textbf{Representative Generation Techniques} \\
+        \midrule
+        Face Swapping (FS) & 10 & SimSwap, InSwapper, FaceShifter, FSGAN, DeepFakes, InfoSwap \\
+        Face Reenactment (FR) & 13 & Wav2Lip, SadTalker, Face2Face, NeuralTextures, LiveSpeechPortraits \\
+        Entire Face Synthesis (EFS) & 12 & StyleGAN2, StyleGAN3, Stable-Diffusion (v2.1, SD-XL), DiT \\
+        Face Editing (FE) & 5 & StarGAN, StyleCLIP, e4e, InterFaceGAN \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} FS: Face Swapping; FR: Face Reenactment; EFS: Entire Face Synthesis; FE: Face Editing.}
+\end{table}
+
+\subsubsection{Leakage-Free Cross-Validation and Video/Identity-Level Partitioning}
+To prevent data leakage, all dataset splits are performed strictly at the \textbf{source video and subject identity level} prior to frame extraction and sequence windowing:
+\begin{itemize}
+    \item \textbf{Subject-Disjoint 5-Fold Partitioning:} In FaceForensics++ (FF++) \citep{roessler2019faceforensicspp}, DF40, and Celeb-DF \citep{Celeb_DF_cvpr20} video subsets, all manipulated variations sharing a common source video or subject identity are assigned exclusively to the same fold. Under no circumstances do frames or sequences derived from the same source subject appear in both training and validation/testing splits ($0\%$ identity overlap).
+    \item \textbf{Sequence Encapsulation:} Temporal clips of length $T=20$ frames are sampled strictly within individual video boundaries post-partitioning. Sliding windows never cross video boundaries, preventing identical frame overlaps across splits.
+\end{itemize}
+
+\subsubsection{Evaluation Protocol for Unseen Manipulation Categories}
+In cross-category generalization experiments (Table \ref{tab:cross_forgery}):
+\begin{itemize}
+    \item A detector is trained exclusively on all methods belonging to a single manipulation family (e.g., Train on FS) using 5-fold cross-validation on source identities.
+    \item The model is then evaluated on the remaining manipulation categories (Test on FR, EFS, FE). In this protocol, an ``unseen generator'' represents an algorithm from which \textit{zero training images, zero video clips, and zero checkpoint weights} were accessible during training.
+\end{itemize}
+
+\subsubsection{Temporal Adaptation for Static Image Categories (EFS and FE)}
+While FS and FR benchmarks consist of temporal video sequences, EFS and FE predominantly consist of static generated images. To maintain architectural consistency without modifying network topology:
+\begin{itemize}
+    \item Each static image $I \in \mathbb{R}^{3 \times 256 \times 256}$ is expanded into a temporal sequence of length $T=20$ by replicating the static frame across time: $I_1 = I_2 = \dots = I_T = I$.
+    \item Because the spatial descriptors $x_t$ are invariant across time ($x_t = x$), the BiLSTM recurrent state rapidly reaches a fixed-point embedding ($h_T \approx \phi(x)$). 
+    \item We emphasize that on static image categories (EFS, FE), the discriminative performance is predominantly driven by Phase 2 (the Texture Enhancement Block and Multi-Attentional Bilinear Pooling), which detects microscopic upsampling noise and local spatial anomalies. On video categories (FS, FR), the LSTM temporal module provides complementary gains by capturing inter-frame dynamics.
+\end{itemize}
+
+\subsubsection{Preprocessing and Frequency-Preserving Augmentation}
+Preprocessing adheres to the DeepfakeBench standard \citep{Yan2023DeepfakeBench}:
+\begin{enumerate}
+    \item \textbf{Face Alignment and Tracking Fallback:} Facial landmarks (68 points via dlib) are localized on each frame. A least-squares similarity transformation aligns the face to canonical coordinates and crops it to $256 \times 256$ pixels. If landmark detection fails on occasional heavily occluded or blurred frames, bounding box tracking interpolates coordinates from the nearest adjacent detected frame, ensuring continuous sequence extraction without dropping temporal frames.
+    \item \textbf{Frequency-Preserving Augmentation:} Conventional spatial blurring filters inadvertently attenuate high-frequency forensic cues. Drawing on FreqBlender \citep{Huang2024FreqBlender}, data augmentations apply perturbations in the low-frequency Fourier domain while preserving high-frequency bands:
+    \begin{equation}
+        I_{aug} = \mathcal{F}^{-1}\Big( \mathcal{M}_{low} \odot \mathcal{F}(I_{noise}) + (1 - \mathcal{M}_{low}) \odot \mathcal{F}(I) \Big),
+    \end{equation}
+    where $\mathcal{F}$ and $\mathcal{F}^{-1}$ represent 2D Discrete Fourier Transforms and $\mathcal{M}_{low}$ denotes a low-pass binary circular mask.
+\end{enumerate}
+
+\subsection{Spatial-Temporal Network Architecture}
+
+\subsubsection{Spatial Backbone Selection}
+We employ ResNeXt50 (pre-trained on ImageNet-1K) as the primary spatial backbone. ResNeXt50's multi-branch architecture with cardinality dimension ($32 \times 4\text{d}$) enhances representation capacity for fine-grained localized patterns without inflating parameter count. Furthermore, ResNeXt50 exhibits superior gradient stability when integrated with downstream recurrent units compared to VGG16, which suffered from numerical instability and gradient explosion during sequence training on uncompressed video clips.
+
+\subsubsection{Texture Enhancement Block (TEB)}
+Deep convolutional layers progressively attenuate microscopic, high-frequency boundary and noise artifacts due to repeated spatial pooling. To preserve these critical forensic signals, the Texture Enhancement Block (TEB) extracts edge and residual statistics from shallow feature maps $F_{low} \in \mathbb{R}^{64 \times 64 \times 64}$ (from Stage 1) before deep downsampling, as illustrated in Figure \ref{fig:texture_block}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm,
+        font=\sffamily\scriptsize,
+        block/.style={rectangle, draw, fill=blue!10, text centered, rounded corners, minimum height=0.6cm},
+        conv/.style={rectangle, draw, fill=orange!10, text centered, minimum width=1.5cm, minimum height=0.6cm},
+        math/.style={circle, draw, fill=green!10, inner sep=1pt}
+    ]
+        \node (input) {Input $F_{low}$};
+        \node (conv1) [conv, right=0.8cm of input] {Conv $1 \times 1$};
+        \node (conv3) [conv, right=0.8cm of conv1] {Conv $3 \times 3$};
+        \node (add) [math, right=0.8cm of conv3] {$\oplus$};
+        \node (output) [right=0.8cm of add] {Texture Feature $F_{tex}$};
+
+        \draw [thick, ->] (input) -- (conv1);
+        \draw [thick, ->] (conv1) -- (conv3);
+        \draw [thick, ->] (conv3) -- (add);
+        \draw [thick, ->] (add) -- (output);
+
+        \draw [thick, ->] (conv1.north) -- ++(0, 0.5) -| (add.north);
+    \end{tikzpicture}
+    \caption{Texture Enhancement Block (TEB). A shallow residual branch designed to retain microscopic high-frequency manipulation traces.}
+    \label{fig:texture_block}
+    \label{fig:teb}
+\end{figure}
+
+The TEB applies a residual transformation followed by strided convolution to align spatial dimensions:
+\begin{equation}
+    F_{tex} = \text{Downsample}\Big(\mathcal{F}_{tex}(F_{low}) + F_{low}\Big) \in \mathbb{R}^{C_{tex} \times H \times W},
+\end{equation}
+where $C_{tex} = 256$ and spatial resolution matches the backbone stage-4 output ($H=8, W=8$).
+
+\subsubsection{Feature Fusion and Bilinear Attention Pooling (BAP)}
+Let $F_{sem} \in \mathbb{R}^{C_{sem} \times H \times W}$ ($C_{sem} = 2048, H=8, W=8$) denote the deep semantic feature map extracted from ResNeXt50 Stage 4. The semantic and texture feature maps are concatenated along the channel dimension to form the unified spatial representation tensor $F \in \mathbb{R}^{C \times H \times W}$:
+\begin{equation}
+    F = [F_{sem} \,\|\, F_{tex}] \in \mathbb{R}^{C \times H \times W},
+\end{equation}
+where $C = C_{sem} + C_{tex} = 2048 + 256 = 2304$.
+
+The multi-attentional module instantiates $M=4$ parallel attention heads. For each head $k \in \{1, \dots, M\}$, parameterized by projection vector $W_k \in \mathbb{R}^C$ and bias $b_k \in \mathbb{R}$, the normalized 2D spatial attention map $A_k \in \mathbb{R}^{H \times W}$ is computed via spatial softmax:
+\begin{equation}
+    A_k(x,y) = \frac{\exp(W_k^T F(x,y) + b_k)}{\sum_{x'=1}^{H} \sum_{y'=1}^{W} \exp(W_k^T F(x',y') + b_k)},
+\end{equation}
+where $\sum_{x=1}^H \sum_{y=1}^W A_k(x,y) = 1$.
+
+\textbf{Bilinear Attention Pooling (BAP):} Let $\mathbf{F} \in \mathbb{R}^{C \times (HW)}$ denote the unrolled feature matrix and $\mathbf{A} = [A_1; A_2; \dots; A_M] \in \mathbb{R}^{M \times (HW)}$ denote the stacked attention map matrix. Bilinear Attention Pooling computes the outer-product aggregation:
+\begin{equation}
+    \mathbf{V} = \mathbf{F} \, \mathbf{A}^T = \big[V_1, V_2, \dots, V_M\big] \in \mathbb{R}^{C \times M},
+\end{equation}
+where each regional feature vector $V_k \in \mathbb{R}^C$ corresponds to:
+\begin{equation}
+    V_k = \sum_{x=1}^{H} \sum_{y=1}^{W} A_k(x,y) \cdot F(x,y).
+\end{equation}
+Each regional vector is $L_2$-normalized: $V_k \leftarrow \frac{V_k}{\|V_k\|_2 + \epsilon}$, yielding a parts-based descriptor where each head isolates forensic evidence from specific facial regions \citep{Zhao2021MultiAttentional}.
+
+\subsubsection{CNN–LSTM Feature Pipeline and Dimensionality Specification}
+For each frame $t \in \{1, \dots, T\}$ in a $T=20$ frame sequence:
+\begin{enumerate}
+    \item \textbf{Multi-Head Feature Concatenation:} The $M=4$ normalized regional vectors $\{V_1^{(t)}, \dots, V_M^{(t)}\}$ are concatenated:
+    \begin{equation}
+        V_{concat}^{(t)} = \big[V_1^{(t)} \,\|\, V_2^{(t)} \,\|\, V_3^{(t)} \,\|\, V_4^{(t)}\big] \in \mathbb{R}^{M \cdot C} = \mathbb{R}^{9216}.
+    \end{equation}
+    \item \textbf{Linear Bottleneck Projection:} To prevent parameter bloat in the recurrent module, $V_{concat}^{(t)}$ is projected to a $d_{in}=512$ dimensional frame feature vector $x_t$ via a learned linear projection $W_{proj} \in \mathbb{R}^{512 \times 9216}$ with Layer Normalization and GELU activation:
+    \begin{equation}
+        x_t = \text{GELU}\Big(\text{LayerNorm}(W_{proj} V_{concat}^{(t)} + b_{proj})\Big) \in \mathbb{R}^{512}.
+    \end{equation}
+    \item \textbf{Temporal Sequence Modeling (BiLSTM):} The sequence $\{x_1, x_2, \dots, x_T\} \in \mathbb{R}^{T \times 512}$ is passed through a 2-layer Bidirectional LSTM with hidden dimension $d_h = 256$ per direction (yielding 512-dimensional output state $h_t = [\overrightarrow{h}_t \,\|\, \overleftarrow{h}_t] \in \mathbb{R}^{512}$):
+    \begin{equation}
+        h_t, c_t = \text{BiLSTM}\big(x_t, (h_{t-1}, c_{t-1})\big).
+    \end{equation}
+    \item \textbf{Temporal Aggregation and Classification:} Temporal average pooling produces the sequence representation $h_{seq} = \frac{1}{T}\sum_{t=1}^T h_t \in \mathbb{R}^{512}$. This vector is passed to a classification MLP ($512 \to 128 \to 2$) with Dropout ($p=0.3$) and GELU to output binary class logits $\hat{y} \in \mathbb{R}^2$ (Real vs. Fake). At test time on arbitrary-length video streams, inference is executed over sliding temporal windows of length $T=20$ with stride $S=10$, aggregating clip predictions via mean pooling across the complete video duration.
+\end{enumerate}
+
+\begin{table}[ht]
+    \centering
+    \caption{Tensor Dimension Trace Through the Proposed Spatiotemporal Architecture}
+    \label{tab:tensor_dimensions}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|l|l|l}
+        \toprule
+        \textbf{Pipeline Stage} & \textbf{Input Shape} & \textbf{Output Shape} & \textbf{Details / Dimension} \\
+        \midrule
+        Input Video Segment & $(B, T, 3, 256, 256)$ & $(B \cdot T, 3, 256, 256)$ & Batch $B=16$, $T=20$ frames \\
+        ResNeXt50 Stage 4 & $(B \cdot T, 3, 256, 256)$ & $(B \cdot T, 2048, 8, 8)$ & Semantic map $F_{sem}$ \\
+        TEB Texture Block & $(B \cdot T, 64, 64, 64)$ & $(B \cdot T, 256, 8, 8)$ & Texture map $F_{tex}$ \\
+        Feature Fusion & $F_{sem}, F_{tex}$ & $(B \cdot T, 2304, 8, 8)$ & Fused map $F$ ($C=2304$) \\
+        Multi-Head Attention & $(B \cdot T, 2304, 8, 8)$ & $(B \cdot T, 4, 8, 8)$ & $M=4$ attention maps $A_k$ \\
+        BAP Pooling & $F$ and $A$ & $(B \cdot T, 4, 2304)$ & $M=4$ vectors $V_k \in \mathbb{R}^{2304}$ \\
+        Bottleneck Projection & $(B \cdot T, 9216)$ & $(B \cdot T, 512)$ & Linear $W_{proj} \in \mathbb{R}^{512 \times 9216}$ \\
+        Temporal Unfold & $(B \cdot T, 512)$ & $(B, 20, 512)$ & Temporal sequence $x_t$ \\
+        2-Layer BiLSTM & $(B, 20, 512)$ & $(B, 20, 512)$ & Hidden $d_h = 256 \times 2 = 512$ \\
+        Temporal Mean Pool & $(B, 20, 512)$ & $(B, 512)$ & Global descriptor $h_{seq}$ \\
+        MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} $B$: Batch Size; $T$: Sequence Length; TEB: Texture Enhancement Block; BAP: Bilinear Attention Pooling; BiLSTM: Bidirectional LSTM.}
+\end{table}
+
+\subsection{Training Strategy and Loss Formulations}
+
+\subsubsection{Loss Functions}
+Unconstrained multi-head attention is susceptible to attention collapse, where all heads co-activate on the single most salient visual artifact (such as mouth or eye regions). To enforce spatial diversity and representation orthogonality, the network is trained with a composite objective combining Cross-Entropy Classification Loss ($\mathcal{L}_{CE}$) with a dual-regularized Regional Independence Loss ($\mathcal{L}_{RIL}$).
+
+\paragraph{Regional Independence Loss (\texorpdfstring{$\mathcal{L}_{RIL}$}{L\_RIL})}
+The Regional Independence Loss is formulated with two complementary objectives:
+\begin{equation}
+    \mathcal{L}_{RIL} = \mathcal{L}_{spatial} + \gamma \, \mathcal{L}_{feat},
+\end{equation}
+where $\gamma = 1.0$ balances spatial separation and feature decorrelation.
+
+1. \textbf{Spatial Attention Map Non-Overlap Loss ($\mathcal{L}_{spatial}$):} Directly penalizes spatial co-activation between 2D attention maps $A_i$ and $A_j$ across spatial coordinates $(x,y)$, normalized over all $\binom{M}{2}$ head pairs:
+\begin{equation}
+    \mathcal{L}_{spatial} = \frac{2}{M(M-1)} \sum_{i=1}^{M-1} \sum_{j=i+1}^{M} \sum_{x=1}^{H} \sum_{y=1}^{W} A_i(x,y) \cdot A_j(x,y).
+\end{equation}
+Because spatial attention weights sum to 1 ($\sum_{x,y} A_k(x,y) = 1$), minimizing $\mathcal{L}_{spatial}$ drives the overlap integral toward zero, explicitly forcing each attention head to cover physically disjoint facial zones (e.g., eyes, nose, mouth, blending contour).
+
+2. \textbf{Regional Feature Orthogonality Loss ($\mathcal{L}_{feat}$):} Since the regional vectors $V_k$ are $L_2$-normalized, their cosine similarity reduces to inner product $V_i^T V_j$. The feature orthogonality loss penalizes redundant semantic representations:
+\begin{equation}
+    \mathcal{L}_{feat} = \frac{2}{M(M-1)} \sum_{i=1}^{M-1} \sum_{j=i+1}^{M} \max\big(0,\, V_i^T V_j - m\big),
+\end{equation}
+where $m = 0.2$ is a margin hyperparameter.
+
+\paragraph{Total Composite Objective}
+The complete end-to-end training loss is:
+\begin{equation}
+    \mathcal{L}_{Total} = \mathcal{L}_{CE} + \lambda \cdot \mathcal{L}_{RIL},
+\end{equation}
+where $\mathcal{L}_{CE}$ is standard cross-entropy loss and $\lambda = 0.5$ is the weighting coefficient determined via sensitivity sweep (Section \ref{sec:sensitivity}).
+
+\subsubsection{Attention Guided Data Augmentation (AGDA)}
+To further enhance robustness against spatial over-specialization, Attention Guided Data Augmentation (AGDA) dynamically erases or blurs the most active attention region during training. By masking dominant facial zones with probability $p=0.5$, the network is forced to discover secondary, subtle forensic cues across alternative regions \citep{Zhao2021MultiAttentional}.
+
+\subsection{Implementation Details}
+
+\subsubsection{Hardware Environment}
+Experiments were executed on an NVIDIA GeForce RTX 3080 Ti GPU (12GB VRAM), accommodating a batch size of 16 for the hybrid CNN-LSTM framework ($T=20$ frames per sample). Preprocessing, facial landmark extraction, and landmark alignment were accelerated using an AMD Ryzen 9 5900X CPU (12 cores, 24 threads) with 64GB DDR4 RAM.
+
+\subsubsection{Software and Frameworks}
+The pipeline is implemented in PyTorch (v2.1.0) with CUDA 12.1. Supporting packages include:
+\begin{itemize}
+    \item \textbf{OpenCV (v4.8.1):} Video stream demuxing, frame extraction, and spatial transformation.
+    \item \textbf{Dlib (v19.24):} 68-point facial landmark localization and canonical alignment.
+    \item \textbf{Albumentations (v1.3.1):} Data augmentation including frequency-preserving perturbations.
+    \item \textbf{WandB (v0.16.0):} Experiment tracking, metric visualization, and hyperparameter sweeps.
+\end{itemize}
+
+\subsubsection{Optimization Parameters}
+Networks are optimized using Adam with an initial learning rate $\eta = 10^{-4}$, weight decay $10^{-5}$, and momentum parameters $\beta_1 = 0.9, \beta_2 = 0.999$. A step learning rate scheduler decays $\eta$ by a factor of 0.1 every 5 epochs over a total of 15 epochs. Sequence length is fixed at $T=20$ frames per segment.

@@ -1,0 +1,46 @@
+\section{Introduction}
+\label{sec:introduction}
+
+\subsection{Background and Motivation}
+A decade ago, generating high-fidelity facial swaps in video sequences required specialized visual effects teams and substantial computational rendering clusters. Today, commodity graphics hardware and publicly accessible pre-trained models enable users to synthesize realistic manipulations with minimal resource constraints. This democratization of generative tools has elevated deepfake detection to a critical research area rather than a mere digital curiosity. While the underlying spatiotemporal techniques support legitimate industries such as multilingual film synchronization and video game animation, they also present significant risks when deployed to generate unauthorized and deceptive content featuring real individuals.
+
+The first deepfakes appeared in late 2017. They used autoencoders to swap faces and circulated on anonymous forums. Within about a year, GANs replaced autoencoders and the quality jumped sharply. Diffusion models came next and currently produce the most convincing results \citep{Liu2025Evolving, Shiohara2025ExposeAnyone}. Each step also widened what could be faked. The current tools do four distinct things. They swap one face for another, drive a target face with the expressions and head movements of a source, synthesize a face that belongs to no real person, and edit attributes like apparent age or gender on an existing face. By 2026, the output of these tools was good enough that a viewer cannot reliably tell it apart from genuine footage by eye \citep{Liu2025SIDA}.
+
+This is already causing real harm. Fabricated video has been used to put words in the mouths of politicians. Fraudsters have cloned a person's face and voice to defeat the video checks banks use to verify identity. People have been targeted with fake explicit imagery built from ordinary photos of them. A convincing fake travels further and faster than the correction that follows it, which is why digital media forensics treats reliable detection as urgent rather than academic.
+
+The first detectors were CNNs that classified single frames as real or fake. Against the generators of that period they worked, because those generators left visible traces: seams where a swapped face was blended in, mismatched resolution between the face and the rest of the frame, smeared texture around the hairline. Then the generators got better and stopped leaving those traces. A detector trained to spot blending seams has nothing to spot once the seams are gone.
+
+\subsection{Problem Statement}
+Detection has not kept up with generation, and it has fallen behind in three particular ways. Each one is the reason for a design decision later in this paper.
+
+\subsubsection{The Generalization Gap}
+A detector trained on one kind of forgery tends to fail on the others. FaceForensics++ (FF++) is still the most common training benchmark, even though the forgery methods it contains are several years out of date \citep{roessler2019faceforensicspp, Yan2023DeepfakeBench}. A model that has learned to find blending boundaries has nothing to work with on Entire Face Synthesis (EFS) from a diffusion model, because that kind of forgery has no blending boundary \citep{Yan2024DF40}. The comparison problem makes this harder to see. Papers report results under different preprocessing and training setups, so two numbers in two papers are often not measuring the same thing. Run the same model under different setups and the AUC can move by several points. Yan et al. went through this carefully, and the size of the gap they found was larger than most researchers in the area had assumed \citep{Deng2025DeepfakeEval}.
+
+\subsubsection{Temporal Inconsistencies}
+Although deepfakes are inherently temporal video sequences, many existing detectors analyze frames independently, discarding temporal context. Analyzing isolated frames using spatial-only models often fails to detect manipulation, as advanced generative models excel at producing realistic individual frames. However, these models frequently introduce inter-frame inconsistencies, such as unnatural blinking rhythms, subtle movement jitter at transition boundaries, and premature expression transitions. Because these dynamic discrepancies are invisible in static frames, robust detection necessitates sequence-level modeling.
+
+\subsubsection{Fine-Grained Artifacts}
+A good forgery does not look wrong everywhere at once. It looks wrong in one place. The corner of an eye, the line where skin meets hair, the texture of a small patch of cheek. A detector that squeezes the whole face into one feature vector and runs a yes/no classifier on it will smear that one bad spot together with everything that looks fine, and the signal gets lost in the average. Framing the task as fine-grained classification, where the model attends to specific regions instead of the whole image at once, is a better fit for the kind of mistake current generators actually make \citep{Zhao2021MultiAttentional, Chen2024FreqNet}.
+
+\subsection{Proposed Approach and Methodological Innovations}
+The framework proposed in this paper addresses these three limitations through a unified spatiotemporal architecture built on three synergistic methodological innovations:
+
+\begin{enumerate}
+    \item \textbf{Spatiotemporal Texture-Attentional Integration:} Unlike prior works that use temporal sequence modeling or multi-attention in isolation, our approach formulates a dynamic sequence representation. Shallow-layer Texture Enhancement (TEB) features are fused with regional Bilinear Attention Pooling (BAP) descriptors before sequence aggregation through an LSTM network. This preserves high-frequency microscopic artifacts through deep pooling layers and models inter-frame temporal inconsistencies simultaneously.
+    
+    \item \textbf{Fourier-Domain Frequency Preservation \& Diversity Augmentation:} To protect high-frequency texture traces from degradation by standard video compression or spatial augmentations, we implement a Fourier-space frequency-preserving augmentation strategy paired with Regional Independence Loss ($\mathcal{L}_{RIL}$). This prevents attention heads from collapsing into a single global descriptor and retains discriminative frequency cues across diverse forgery types.
+    
+    \item \textbf{Standardized Cross-Generator Evaluation Protocol:} We conduct rigorous within-domain and cross-generator evaluation across 40 distinct manipulation algorithms using the DF40 dataset, establishing standardized benchmark protocols against state-of-the-art detectors under identical pre-training and augmentation conditions.
+\end{enumerate}
+
+\subsection{Contributions}
+Specifically, this paper makes three key contributions:
+
+\begin{itemize}
+    \item \textbf{Architectural Innovation:} We present a novel unified detection framework combining ResNeXt50 spatial feature extraction, shallow texture enhancement, multi-attentional regional pooling, and LSTM sequence modeling. We demonstrate through rigorous k-fold cross-validation with statistical significance ($\text{Mean} \pm \text{Std Dev}$) that this end-to-end integration outperforms both spatial-only and unconstrained temporal baselines.
+    \item \textbf{Fine-Grained Multi-Region Feature Disambiguation:} We reframe deepfake detection as a multi-region fine-grained classification task. By enforcing a Regional Independence Loss and Attention Guided Data Augmentation (AGDA), we prevent attention collapse and ensure distinct coverage across local facial parts (eyes, nose, mouth, boundary).
+    \item \textbf{Comprehensive DF40 Benchmark \& SOTA Comparisons:} We provide an exhaustive empirical evaluation on the 40-method DF40 dataset across Face Swapping, Face Reenactment, Entire Face Synthesis, and Face Editing, benchmarking against state-of-the-art detectors (CLIP-large, UniFace, SBI, Xception) under strictly controlled training pipelines.
+\end{itemize}
+
+\subsection{Paper Structure}
+The remainder of this paper is organized as follows: Section \ref{sec:lit_review} reviews the deepfake generation and detection literature. Section \ref{sec:methodology} describes the proposed ResNeXt50-LSTM multi-attentional architecture, mathematical formulations, and training strategy in detail. Section \ref{sec:results} presents the experimental setup, benchmark results on DF40 and FF++, ablation studies, hyperparameter sensitivity analysis, quantitative failure case breakdowns, and ethical considerations. Section \ref{sec:conclusion} concludes the paper and outlines future research directions.

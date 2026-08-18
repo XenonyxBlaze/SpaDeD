@@ -1,0 +1,87 @@
+\section{Literature Review}
+\label{sec:lit_review}
+
+\subsection{Overview}
+Research interest in deepfake detection accelerated sharply from 2018 onward, driven by high-profile misuse cases. \citet{Rana2022Systematic} mapped the field systematically in their comprehensive survey, identifying four detection categories: deep learning-based, conventional machine learning, statistical, and blockchain-based approaches. Deep learning methods account for roughly 77\% of published work, which makes sense given that the generation methods being targeted are themselves neural \citep{Wang2025MultimodalSurvey}.
+
+This section traces the generation technology that detectors must contend with, then examines four bodies of work that motivated this paper: DeepfakeBench's benchmarking critique, DF40's generalization analysis, Zhao et al.'s fine-grained spatial approach, and Jugade et al.'s temporal modeling study. The recurring theme across all four is that detection performance reported in isolation tells you very little about how a detector will behave in practice.
+
+\subsection{The Evolution of Deepfake Generation}
+Detection and generation have evolved in close response to each other. Understanding what each generation of synthesis tools produces, and what it fails to conceal, is prerequisite to understanding why current detectors work when they do.
+
+\subsubsection{Autoencoder-Based Face Swapping}
+Early deepfakes, including FakeApp and DeepFaceLab, used shared autoencoder architectures. Two encoders with shared weights learn a common latent representation of two faces; separate decoders reconstruct each identity from that shared space. The results were technically novel for their time but visually imperfect. Hair boundaries blurred. Skin-tone transitions were inconsistent. High-frequency texture detail was lost. These were exploitable artifacts, and early detectors were built to find exactly them.
+
+\subsubsection{Generative Adversarial Networks (GANs)}
+StyleGAN and its successors changed the situation. A min-max game between generator and discriminator drove both toward higher quality, and state-of-the-art GAN swappers like SimSwap and InSwapper achieved identity transfers that held up to closer inspection. They were not perfect. GAN upsampling layers introduce characteristic ``checkerboard'' patterns in the frequency domain, a byproduct of how transposed convolutions operate. Frequency-based detectors learned to find these, turning a generation artifact into a detection handle \citep{Zhao2021MultiAttentional, Sun2024ForgeryTrace}.
+
+\subsubsection{Diffusion Models (DDPM and LDM)}
+Denoising Diffusion Probabilistic Models and Latent Diffusion Models raised the quality ceiling again by reversing a Gaussian noise process rather than training a discriminator. The images produced show greater diversity and fewer structural artifacts than GAN outputs. The checkerboard problem does not appear. What does appear is a different kind of high-frequency noise signature, distinct from GAN traces, that requires detection systems to generalize across two fundamentally different artifact distributions \citep{Yan2024DF40, Li2024DiffSeg, Shiohara2025ExposeAnyone}.
+
+\subsection{Benchmarking and Standardization Challenges}
+One of the field's more uncomfortable findings is that a significant portion of reported performance gains may not reflect genuine methodological advances. \citet{Yan2023DeepfakeBench} documented this through the DeepfakeBench study. Differences in preprocessing choices, data augmentation pipelines, and pre-training protocols produce performance differences large enough to dwarf the claimed improvements of proposed methods. Two papers evaluating the same detector on the same dataset can report results several AUC points apart simply because their training pipelines differ.
+
+\subsubsection{The Role of Naive Detectors}
+The counterintuitive finding from DeepfakeBench is that standard CNNs — Xception being the representative case — perform comparably to architectures marketed as state-of-the-art when training conditions are held constant. Xception reached an AUC of 94.50\% in within-domain evaluation, roughly matching specialized frequency-based detectors \citep{Chen2024FreqNet}. The implication is uncomfortable but important: many published performance gaps likely reflect differences in augmentation schemes and pre-training choices, not the architectural innovations being claimed. The proposed method looks better than the baseline partly because it was trained more carefully.
+
+\subsubsection{The Effect of Data Augmentation}
+The DeepfakeBench study \citep{Yan2023DeepfakeBench} provides specific evidence of this through its augmentation analysis. Compression and Gaussian blur augmentation improve resilience to low-quality video, but they degrade frequency-based detectors by masking the high-frequency signal those methods depend on. This is a real design constraint, not an edge case. An augmentation strategy that protects against one failure mode can directly create another. The balanced approach, preserving frequency information while building resilience to spatial degradation, requires explicit attention \citep{Huang2024FreqBlender}.
+
+\subsection{The Generalization Gap and Dataset Diversity}
+Cross-generator generalization is where the practical failure of current detectors is most visible. The DF40 benchmark \citep{Yan2024DF40} tested what happens when detectors trained on standard datasets encounter generation methods not represented in their training data. The results were poor across the board.
+
+\begin{table}[ht]
+    \centering
+    \caption{Comparative Analysis of Major Deepfake Datasets}
+    \label{tab:dataset_comparison}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|c|c|l}
+        \toprule
+        \textbf{Dataset} & \textbf{Year} & \textbf{Videos/Images} & \textbf{Key Features} \\
+        \midrule
+        FaceForensics++ \citep{roessler2019faceforensicspp} & 2019 & 5,000 videos & Standardized for FS and FR. \\
+        Celeb-DF (v2) \citep{Celeb_DF_cvpr20} & 2020 & 6,229 videos & High-quality swaps with minimized artifacts. \\
+        DFDC & 2020 & 128,454 videos & Large scale, real-world perturbations. \\
+        WildDeepfake & 2021 & 7,314 videos & Collected from internet sources. \\
+        \textbf{DF40} & \textbf{2024} & \textbf{40 methods} & \textbf{Unparalleled diversity of generation techniques.} \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+\subsubsection{Asymmetric Failure Modes}
+DF40 covers 40 distinct manipulation methods across Face Swapping (FS), Face Reenactment (FR), Entire Face Synthesis (EFS), and Face Editing (FE). The diversity revealed a pattern that straight accuracy numbers obscure: performance degrades unevenly across categories. Models trained on Face Swapping generalize reasonably well to Entire Face Synthesis. Models trained on EFS have significant trouble with localized Face Swapping. The mechanism is that EFS-trained models learn to identify global artifacts, while FS artifacts are localized to the face boundary. Train on one, the other category's signal is invisible.
+
+\subsubsection{Non-Blending Artifacts}
+A consequence of how modern generators work is that the detection heuristics embedded in older methods simply do not apply. Systems like SimSwap and diffusion-based methods synthesize the complete image without traditional compositing steps. There is no blending boundary to find. Detectors that use blending seams as their primary signal will classify these outputs as real by default. DF40 also showed that large pre-trained models like CLIP transfer better to unseen generator types than standard backbones, likely because pre-training on large-scale real-world data builds richer representations of human facial structure.
+
+\subsection{Fine-Grained Spatial Analysis}
+\citet{Zhao2021MultiAttentional} argued that treating deepfake detection as a binary classification problem is the wrong framing. The discriminative signal in high-quality forgeries is local, not global. Global feature extraction pools over the entire face image; it will average out a subtle artifact at the left eye corner the same way it averages out the background wall. Reframing detection as a fine-grained classification problem, where the model must identify \textit{which parts} of the face are anomalous, is structurally better suited to the task.
+
+\subsubsection{Multi-Attentional Framework}
+Zhao et al.'s implementation uses multiple parallel spatial attention heads, each directed toward a different facial region. The eyes, lips, and face boundaries can carry different forgery signals simultaneously; separate attention heads allow the network to attend to each without forcing a single global descriptor to encode everything. The key design insight is that forgery evidence is distributed, and a detector should distribute its attention accordingly.
+
+\subsubsection{Texture Enhancement and Regional Independence}
+Manipulation traces tend to be high-frequency signals that get suppressed as features pass through deeper layers and pooling operations. \citet{Zhao2021MultiAttentional} added a texture enhancement block operating on shallow feature maps, before pooling has a chance to destroy the relevant detail — a choice that subsequent work on wavelet sub-band analysis supports \citep{Zhu2025WaveDIF, Li2024FrequencyAware}. A Regional Independence Loss prevents attention heads from collapsing onto the same location. Without it, multiple heads will converge on whichever facial region carries the strongest signal, effectively reducing the multi-head system to a single-head one \citep{pan25}. The loss, combined with Attention Guided Data Augmentation (AGDA), keeps heads discriminatively separate.
+
+\subsection{Video Forensics: Modeling Time}
+A spatial detector is, by construction, a frame-level detector. \citet{Jugade2026SpatialTemporal} showed the gap this creates: spatial-only systems miss inter-frame jitter, anomalous blink sequences, and other temporal inconsistencies that only appear across a sequence of frames. Work on facial component-guided adaptation in foundation models corroborates this, showing that attending to specific facial regions over time improves generalization in video-based detection \citep{Zhang2025FCG}.
+
+\subsubsection{CNN-LSTM Hybrid Architectures}
+The hybrid approach Jugade et al. evaluated is conceptually straightforward: a CNN extracts spatial features from each frame, and an LSTM models how those features change over time. The integration is where design choices matter. The CNN selection affects what spatial information is available to the LSTM. Different backbones produce meaningfully different results.
+
+\subsubsection{Performance Trade-offs}
+The comparative results from Jugade et al. are practically useful for backbone selection. VGG16-LSTM achieved high training accuracy (99.16\%) and recall (94.40\%), but showed clear overfitting — training and validation accuracy diverge noticeably. ResNeXt50-LSTM reached 94.23\% precision with better generalization. For a detection task where deployment performance matters more than in-sample fit, ResNeXt50's stability across training and validation is the more relevant quality.
+
+\subsection{Motivations for the Proposed Model}
+The four bodies of work reviewed here each point to a specific design decision in this paper:
+
+\begin{enumerate}
+    \item \textbf{Fine-grained detection (from Zhao et al.):} The proposed model frames detection as a fine-grained problem, not binary classification. Multi-attentional mechanisms with texture enhancement blocks preserve localized, high-frequency cues at the eyes and lips that global pooling would erase.
+
+    \item \textbf{Hybrid spatiotemporal modeling (from Jugade et al.):} An LSTM is added above the spatial backbone to capture inter-frame anomalies. ResNeXt50 is selected based on its demonstrated stability in the hybrid architecture comparison.
+
+    \item \textbf{Standardized training protocols (from Yan et al. — DeepfakeBench):} Training procedures are held consistent across all experiments. Augmentation (compression, blur) is chosen to build resilience to real-world degradation without destroying the frequency artifacts the texture module depends on.
+
+    \item \textbf{Diversity-aware training (from Yan et al. — DF40):} Training covers Face Swapping, Reenactment, and Entire Face Synthesis explicitly. Non-blending deepfakes such as SimSwap outputs are included to prevent the model from over-specializing on boundary artifacts that newer generators simply do not produce.
+\end{enumerate}

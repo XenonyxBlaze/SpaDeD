@@ -1,0 +1,72 @@
+\documentclass[runningheads]{llncs}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\graphicspath{{Figures/}}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, calc, backgrounds}
+\usepackage[round]{natbib}
+\usepackage{verbatim}
+\usepackage{multirow}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\hypersetup{urlcolor=blue, colorlinks=true}
+
+% Standard LNCS packages and setup
+\title{Spatiotemporal Deepfake Detection via Texture-Enhanced Multi-Attentional ResNeXt50-LSTM Architecture}
+\titlerunning{Spatiotemporal Deepfake Detection}
+
+\author{Aarav Rajput\inst{1} \and Trapti Sharma\inst{1} \and Rajit Nair\inst{1} \and Hasan Alkahtani\inst{2} \and Adel Musaad Alrasheedi\inst{3} \and  Sami Morsi\inst{4} \and Ahmed A.F.\ Osman\inst{4} \and *Theyazn H.H.\ Aldhyani\inst{4}}
+\authorrunning{A. Rajput et al.}
+
+\institute{School of Computer Science Engineering and Artificial Intelligence\\ VIT Bhopal University, Kothrikalan, Sehore, Madhya Pradesh, 466114, India\\
+\email{aarav.rajput2021@vitbhopal.ac.in}, \email{trapti16sharma@gmail.com}, \email{rajitnitbpl@gmail.com}
+\and
+College of Computer Science and Information Technology, King Faisal University, P.O.\ Box 400, Al-Ahsa, 31982, Saudi Arabia.\\
+\email{hsalkahtani@kfu.edu.sa}
+\and
+Ministry of Education, Riyadh \\
+\email{adelmr8989@gmail.com}
+\and
+Applied College, King Faisal University, Al-Ahsa, 31982, Saudi Arabia\\
+\email{smorsi@kfu.edu.sa}, \email{afadol@kfu.edu.sa}, \email{*taldhyani@kfu.edu.sa}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\textbf{Purpose:} This paper addresses the challenge of deepfake video and image detection across diverse generator types. Current detectors often struggle to generalize because they over-specialize on outdated datasets or specific artifacts (such as blending boundaries) that are absent in modern Entire Face Synthesis (EFS).
+
+\textbf{Design/methodology/approach:} We propose a spatiotemporal deepfake detection framework that leverages a ResNeXt50 convolutional neural network for spatial feature extraction, integrated with a Long Short-Term Memory (LSTM) network to model temporal sequence dependencies. The framework incorporates a shallow Texture Enhancement Block (TEB) to capture high-frequency textural traces and a multi-attentional mechanism with Bilinear Attention Pooling (BAP) to extract regional descriptors from independent facial zones. We train the network using a composite loss function that pairs cross-entropy with a Regional Independence Loss ($\mathcal{L}_{RIL}$) to prevent attention collapse.
+
+\textbf{Findings:} Evaluated using 5-fold cross-validation on the DF40 and FaceForensics++ benchmarks, the proposed framework demonstrates superior detection accuracy and generalization capabilities. In cross-domain evaluations on unseen generator categories, it outperforms state-of-the-art baseline detectors (including CLIP-large and UniFace) by a significant margin (e.g., achieving $83.2\% \pm 0.4\%$ AUC on EFS when trained on Face Reenactment, outperforming CLIP-large by $+2.3\%$). Paired t-tests with Bonferroni and Benjamini-Hochberg FDR corrections confirm that these improvements are statistically significant ($p < 0.05$).
+
+\textbf{Originality/value:} Unlike existing spatial-only or globally-pooled detectors, our approach introduces a unified spatiotemporal architecture that preserves shallow frequency cues and enforces regional independence across attention heads, preventing them from collapsing onto a single dominant facial region.
+
+\textbf{Implications:} Our work shows that combining regional attention diversity with sequential temporal modeling is crucial for robust forensic analysis. It highlights the necessity of demographic subgroup calibration and the auditing of detector robustness against compression and modern diffusion generators to ensure fair and secure real-world deployment.
+
+\keywords{Deepfake Detection \and Spatiotemporal \and CNN-LSTM \and Multi-Attentional \and Texture Enhancement}
+\end{abstract}
+
+\input{introduction}
+\input{literature_review}
+\input{methodology}
+\input{results}
+\input{conclusion}
+
+\section*{Declarations}
+\begin{itemize}
+\item \textbf{Acknowledgements} Not applicable.
+\item \textbf{Author contributions} Aarav Rajput conceptualized the study and conducted data analysis. Trapti Sharma, Rajit Nair, Hasan Alkahtani, Sami Morsi, Ahmed A.F. Osman, and Theyazn H.H. Aldhyani contributed to methodology development, experiments, manuscript revisions, and final approval.
+\item \textbf{Funding} This work was supported by the Deanship of Scientific Research, Vice Presidency for Graduate Studies and Scientific Research, King Faisal University, Saudi Arabia [Grant No. KFU264265د]
+\item \textbf{Data and Code Availability} Benchmark datasets (DF40, FaceForensics++, Celeb-DF) are publicly accessible. The code implementation, trained model checkpoints, and experimental split protocols are available at \url{https://github.com/XenonyxBlaze/Spatiotemporal-Deepfake-Detection}.
+\item \textbf{Competing interests} The authors declare that they have no competing interests.
+\end{itemize}
+\bibliographystyle{apalike}
+\bibliography{references}
+
+\end{document}

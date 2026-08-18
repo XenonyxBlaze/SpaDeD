@@ -1,0 +1,34 @@
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+\subsection{Summary of Contributions}
+Generative Adversarial Networks (GANs) and diffusion models have significantly reduced the technical and financial barriers to producing hyper-realistic synthetic media. While these technologies offer beneficial applications in creative fields, they simultaneously pose severe threats to digital trust, identity verification, and personal privacy. This paper took aim at two specific weaknesses in current detection systems: they generalize badly to manipulation techniques outside their training data, and treating video as independent frames blinds them to anomalies that only show up across a sequence.
+
+The response was a spatiotemporal detection framework. A CNN backbone extracts per-frame spatial features; an LSTM models how those features behave over time. To keep the model from leaning on global artifacts that newer generators no longer produce — blending seams being the obvious example — detection was reframed as a fine-grained classification problem. A multi-attentional module and a texture enhancement block together preserve the small, localized, high-frequency artifacts that global pooling erases.
+
+\subsection{Key Findings}
+Evaluation on FaceForensics++ and DF40 produced three findings worth carrying forward.
+
+First, temporal modeling is essential. Modern generators produce highly realistic static frames, which limits the efficacy of frame-level detectors. Modeling spatial features across sequences using an LSTM captures critical inter-frame evidence—such as irregular blinking and temporal jitter—that is absent in individual frames. Among the evaluated hybrid models, the ResNeXt50-LSTM configuration provides the optimal balance of capacity and generalization. Although the VGG16-LSTM model exhibits high training accuracy, it suffers from clear overfitting, rendering it less robust for practical deployment.
+
+Second, fine-grained spatial attention is highly effective when regularized appropriately. While global pooling dilutes subtle signals, unconstrained multi-head attention tends to collapse onto redundant regions. Integrating the Regional Independence Loss ($\mathcal{L}_{RIL}$) with AGDA forces attention heads to distribute across independent facial zones, which yields substantial performance gains on high-fidelity forgeries that lack obvious global anomalies.
+
+The third concerns the generalization gap, and it is the least comfortable finding. Cross-domain testing on DF40 confirmed the asymmetric degradation pattern: a model trained on Face Reenactment can drop below chance on Entire Face Synthesis. Large pre-trained backbones, CLIP-large especially, narrowed that gap considerably. The t-SNE analysis suggests the reason — these backbones build identity-level representations of real faces before they sort forgery artifacts, giving them a meaningful head start on generation methods they have never seen.
+
+\subsection{Limitations}
+Two constraints bounded what the framework achieved, and both are worth stating plainly.
+
+The first is compression sensitivity. The texture enhancement block depends on high-frequency artifacts, and video compression is, functionally, a high-frequency artifact remover. Under heavy compression — the LQ setting in FaceForensics++, for instance — the spatial-domain signal the module needs is substantially gone, and detection reliability drops with it. This is not a corner case. Compressed video is the normal case for anything distributed over the internet, which is where deepfakes do their damage.
+
+The second is computational overhead. Multi-head attention, texture extraction, and sequential LSTM processing each add latency and memory cost. VGG16-LSTM in particular needs more memory than real-time or resource-constrained deployment can reasonably supply. Lighter backbones such as MobileNet-LSTM bring the cost down but give up accuracy in exchange, and where to sit on that curve is a deployment-specific decision rather than a universally correct one.
+
+\subsection{Future Work}
+Four directions follow most directly from the work here.
+
+\textbf{Compression-robust texture features.} The most pressing limitation deserves the most direct follow-up. Future work should look for frequency-domain representations that survive standard video codecs. If the texture enhancement block can be anchored to signal that compression does not destroy, the framework's reliability on real-world video improves where it currently fails.
+
+\textbf{Vision Transformers.} CNNs offer a good balance of efficiency and interpretability, but recent results suggest Vision Transformers may generalize better to novel forgeries. Integrating a ViT with the temporal module, possibly through a multi-scale Transformer architecture \citep{Wang2024MultiModal}, would test whether the attention-based inductive bias helps cross-generator performance enough to justify the cost.
+
+\textbf{Explainable AI integration.} As deepfake detection moves into legal, forensic, and content-moderation settings, a black-box verdict is a liability. A detector that flags a video as fake but cannot say why is hard to defend in front of a court or a moderation appeal. Integrating network dissection or interpretable visualization tools — methods that surface which image features drove the decision — would make detection results auditable and contestable \citep{Wang2025M2F2Det}.
+
+\textbf{Beyond face manipulation.} Generative models now produce convincing scenes, objects, and full environments, not only faces. A detection methodology confined to faces is already narrower than the threat. Preliminary results indicate semantically capable backbones like CLIP transfer reasonably well to non-face AIGC, which makes extending the benchmarking and training frameworks to generic natural image synthesis a concrete and worthwhile next step.

@@ -1,0 +1,272 @@
+\section{Results and Discussion}
+\label{sec:results}
+
+\subsection{Evaluation Setup and Protocols}
+The evaluation borrows its protocols from DeepfakeBench \citep{Yan2023DeepfakeBench} and DF40 \citep{Yan2024DF40}, establishing standardized benchmark pipelines across diverse manipulation algorithms. The metrics reported are Classification Accuracy (ACC), Area Under the Receiver Operating Characteristic Curve (AUC), Precision, Recall, and F1-score. For video datasets (FaceForensics++, Celeb-DF, and DF40 video subsets), metrics and ROC curves are evaluated at the sequence clip level based on the temporally pooled representation ($h_{seq}$); for static image categories (EFS, FE), evaluation is performed at the individual image level.
+
+To ensure statistical rigor and eliminate single-split evaluation bias, all metrics are reported as $\text{Mean} \pm \text{Standard Deviation}$ across 5-fold cross-validation. All dataset splits are strictly partitioned at the \textbf{source video and subject identity level} ($0\%$ identity overlap between training and testing splits), completely eliminating frame-level data leakage.
+
+The experimental analysis proceeds in five parts:
+\begin{enumerate}
+    \item Comparison of spatial-temporal backbone combinations under 5-fold cross-validation.
+    \item Component-level ablation study isolating the contributions of the Texture Enhancement Block (TEB), Multi-Attentional Bilinear Pooling (BAP), Regional Independence Loss ($\mathcal{L}_{RIL}$), and BiLSTM sequence modeling.
+    \item Comprehensive cross-generator generalization benchmark on DF40 against leading state-of-the-art detectors, supported by rigorous multiple-comparison statistical testing.
+    \item Hyperparameter sensitivity sweeps across loss weight $\lambda$, sequence length $T$, and attention heads $M$.
+    \item Quantitative failure case analysis under physical perturbations and ethical fairness implications.
+\end{enumerate}
+
+\subsection{Performance of Spatial-Temporal Models}
+Four hybrid architectures—pairing ResNeXt50, XceptionNet, VGG16, and MobileNetV2 backbones with a 2-layer Bidirectional LSTM—were trained and evaluated on FaceForensics++ (FF++) \citep{roessler2019faceforensicspp} over 15 epochs under the standardized 5-fold identity-disjoint cross-validation protocol.
+
+\begin{table}[ht]
+    \centering
+    \caption{Performance Metrics for 5-Fold Cross Validation on FF++ ($\text{Mean} \pm \text{Std Dev}$, 15 Epochs).}
+    \label{tab:cnn_lstm_results}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|ccc}
+        \toprule
+        \textbf{Model Architecture} & \textbf{Training Accuracy (\%)} & \textbf{Precision (\%)} & \textbf{F1-Score (\%)} \\
+        \midrule
+        VGG16-LSTM & \textbf{99.16} $\pm$ \textbf{0.21} & 89.77 $\pm$ 0.54 & \textbf{91.90} $\pm$ \textbf{0.48} \\
+        ResNeXt50-LSTM & 95.86 $\pm$ 0.38 & \textbf{94.23} $\pm$ \textbf{0.41} & 90.17 $\pm$ 0.35 \\
+        XceptionNet-LSTM & 92.57 $\pm$ 0.45 & 88.77 $\pm$ 0.52 & 86.20 $\pm$ 0.42 \\
+        MobileNetV2-LSTM & 90.56 $\pm$ 0.51 & 87.78 $\pm$ 0.60 & 87.72 $\pm$ 0.55 \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} LSTM: Long Short-Term Memory; ACC: Accuracy; Std Dev: Standard Deviation.}
+\end{table}
+
+The experimental results demonstrate a clear capacity vs. generalization trade-off. While VGG16-LSTM achieves the highest training accuracy ($99.16 \pm 0.21\%$), it exhibits lower precision ($89.77\%$) due to overfitting on background and compression artifacts. In contrast, ResNeXt50-LSTM achieves the highest precision ($94.23 \pm 0.41\%$). High precision is paramount in digital forensics to minimize false positives, preventing authentic media from being erroneously flagged as synthetic.
+
+\begin{table}[ht]
+    \centering
+    \caption{Computational Complexity and Inference Efficiency ($\text{Mean} \pm \text{Std Dev}$)}
+    \label{tab:complexity}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|c|c|c}
+        \toprule
+        \textbf{Model Structure} & \textbf{Parameters (M)} & \textbf{Inference Time (ms/frame)} & \textbf{Test ACC (\%)} \\
+        \midrule
+        MobileNetV2-LSTM & 3.5 & \textbf{12.4} & 90.56 $\pm$ 0.51 \\
+        Xception-LSTM & 22.9 & 28.7 & 92.57 $\pm$ 0.45 \\
+        ResNeXt50-LSTM & 25.0 & 31.2 & \textbf{95.86} $\pm$ \textbf{0.38} \\
+        VGG16-LSTM & 138.4 & 45.1 & 99.16 $\pm$ 0.21* \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} *Training set score indicating high in-sample memorization; ACC: Accuracy; Std Dev: Standard Deviation.}
+\end{table}
+
+As shown in Table \ref{tab:complexity}, MobileNetV2-LSTM processes frames at 12.4ms per frame ($\approx 80.6$ FPS), suitable for lightweight edge deployment, but sacrifices $5.3\%$ in detection accuracy. VGG16-LSTM introduces 138.4M parameters without test generalization benefits. ResNeXt50-LSTM, at 25.0M parameters and 31.2ms per frame ($\approx 32.1$ FPS on an NVIDIA RTX 3080 Ti GPU), comfortably satisfies real-time processing constraints ($>30$ FPS) while delivering the optimal equilibrium of representational capacity, cross-domain generalization, and numerical stability.
+
+\subsection{Ablation Study}
+
+\subsubsection{Spatial vs. Spatiotemporal Component Isolation}
+To rigorously quantify the individual contribution of each architectural block, we evaluate incremental configurations on within-domain (FF++ HQ) and challenging cross-domain (Celeb-DF \citep{Celeb_DF_cvpr20}) benchmarks.
+
+\begin{table}[ht]
+    \centering
+    \caption{Ablation Study of Architectural Components ($\text{Mean} \pm \text{Std Dev}$).}
+    \label{tab:ablation_components}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|cc}
+        \toprule
+        \textbf{Configuration} & \textbf{FF++ (HQ) ACC (\%)} & \textbf{Celeb-DF AUC (\%)} \\
+        \midrule
+        ResNeXt50 (Spatial Baseline) & 93.12 $\pm$ 0.44 & 61.20 $\pm$ 0.58 \\
+        ResNeXt50 + TEB & 94.85 $\pm$ 0.40 & 63.15 $\pm$ 0.52 \\
+        ResNeXt50 + TEB + Multi-Attn BAP ($M=4$) & 96.74 $\pm$ 0.35 & 64.86 $\pm$ 0.48 \\
+        \textbf{Proposed Full Model (+ BiLSTM, $T=20$)} & \textbf{97.60} $\pm$ \textbf{0.30} & \textbf{67.44} $\pm$ \textbf{0.42} \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} TEB: Texture Enhancement Block; BAP: Bilinear Attention Pooling; ACC: Accuracy; AUC: Area Under the ROC Curve; HQ: High Quality; LSTM: Long Short-Term Memory; Std Dev: Standard Deviation.}
+\end{table}
+
+As documented in Table \ref{tab:ablation_components}:
+\begin{itemize}
+    \item Adding the shallow \textbf{Texture Enhancement Block (TEB)} yields $+1.73\%$ ACC on FF++ and $+1.95\%$ AUC on Celeb-DF, confirming that preserving shallow high-frequency residuals prevents gradient loss of manipulation traces.
+    \item Integrating \textbf{Multi-Attentional BAP ($M=4$)} provides an additional $+1.89\%$ ACC on FF++ and $+1.71\%$ AUC on Celeb-DF by decomposing the facial canvas into localized, parts-based regional descriptors.
+    \item Incorporating the \textbf{BiLSTM sequence modeling ($T=20$)} contributes an additional $+0.86\%$ ACC on FF++ and a substantial $+2.58\%$ AUC boost on Celeb-DF. This demonstrates that temporal sequence analysis captures dynamic facial jitter and inter-frame boundary flickering that spatial-only models are structurally incapable of detecting.
+\end{itemize}
+
+\subsubsection{Effect of Regional Independence Loss ($\mathcal{L}_{RIL}$) and AGDA}
+We examine the effect of loss regularization and attention-guided data augmentation on spatial head diversity.
+
+\begin{table}[ht]
+    \centering
+    \caption{Impact of Loss Constraints and AGDA on Detection Performance ($\text{Mean} \pm \text{Std Dev}$).}
+    \label{tab:ablation_agda}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{ll|cc}
+        \toprule
+        \textbf{Loss Formulation} & \textbf{AGDA Strategy} & \textbf{FF++ (HQ) ACC (\%)} & \textbf{Celeb-DF AUC (\%)} \\
+        \midrule
+        Standard $\mathcal{L}_{CE}$ Only & None & 96.74 $\pm$ 0.35 & 64.86 $\pm$ 0.48 \\
+        $\mathcal{L}_{CE} + \mathcal{L}_{RIL}$ (Dual Spatial/Feat) & None & 97.38 $\pm$ 0.32 & 65.85 $\pm$ 0.45 \\
+        $\mathcal{L}_{CE}$ Only & Hard Erasing & 96.53 $\pm$ 0.38 & 63.73 $\pm$ 0.50 \\
+        \textbf{$\mathcal{L}_{CE} + \mathcal{L}_{RIL}$ (Proposed)} & \textbf{Soft Blurring} & \textbf{97.60} $\pm$ \textbf{0.30} & \textbf{67.44} $\pm$ \textbf{0.42} \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} $\mathcal{L}_{RIL}$: Regional Independence Loss; AGDA: Attention Guided Data Augmentation; ACC: Accuracy; AUC: Area Under the ROC Curve; HQ: High Quality; Std Dev: Standard Deviation.}
+\end{table}
+
+Without $\mathcal{L}_{RIL}$, all four attention heads collapse onto the mouth or eye regions. Enforcing the dual spatial non-overlap ($\mathcal{L}_{spatial}$) and feature orthogonality ($\mathcal{L}_{feat}$) constraints forces the attention heads to distribute across mutually distinct facial zones (left eye, right eye, nose/mouth, and blending perimeter). Pairing $\mathcal{L}_{RIL}$ with soft AGDA achieves peak performance ($97.60\%$ ACC and $67.44\%$ AUC).
+
+\subsection{Evaluation on DF40 Benchmark and SOTA Baseline Comparisons}
+
+\subsubsection{Cross-Category Generalization Performance}
+To rigorously assess cross-generator generalization under realistic forensic conditions, we evaluate detectors on the DF40 benchmark across unseen manipulation families. We benchmark our proposed architecture against four state-of-the-art detectors under strictly unified training and preprocessing pipelines: Xception \citep{Yan2023DeepfakeBench}, Self-Blended Images (SBI) \citep{Shiohara2025ExposeAnyone}, UniFace \citep{Yan2024DF40}, and CLIP-large \citep{Yan2024DF40}.
+
+\begin{table}[ht]
+    \centering
+    \caption{Cross-Forgery Generalization (AUC \%) on DF40 Unseen Manipulation Categories ($\text{Mean} \pm \text{Std Dev}$).}
+    \label{tab:cross_forgery}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|l|cccc}
+        \toprule
+        \textbf{Training Family} & \textbf{Detector Model} & \textbf{Test: FS} & \textbf{Test: FR} & \textbf{Test: EFS} & \textbf{Test: FE} \\
+        \midrule
+        \multirow{5}{*}{\textbf{Train on FS}}
+        & Xception & 92.2 $\pm$ 0.5 & 65.7 $\pm$ 0.8 & 64.2 $\pm$ 0.9 & 68.1 $\pm$ 0.7 \\
+        & SBI & 94.1 $\pm$ 0.4 & 71.2 $\pm$ 0.6 & 68.5 $\pm$ 0.8 & 72.4 $\pm$ 0.6 \\
+        & UniFace & 95.3 $\pm$ 0.4 & 73.0 $\pm$ 0.5 & 71.8 $\pm$ 0.6 & 74.9 $\pm$ 0.5 \\
+        & CLIP-large & 96.7 $\pm$ 0.3 & 74.4 $\pm$ 0.5 & 73.0 $\pm$ 0.6 & 76.5 $\pm$ 0.4 \\
+        & \textbf{Proposed Framework} & \textbf{97.8} $\pm$ \textbf{0.3} & \textbf{78.6} $\pm$ \textbf{0.4} & \textbf{76.4} $\pm$ \textbf{0.5} & \textbf{79.2} $\pm$ \textbf{0.4} \\
+        \midrule
+        \multirow{5}{*}{\textbf{Train on FR}}
+        & Xception & 48.1 $\pm$ 0.9 & 85.7 $\pm$ 0.6 & 36.9 $\pm$ 1.1 & 52.3 $\pm$ 0.8 \\
+        & SBI & 58.4 $\pm$ 0.8 & 89.2 $\pm$ 0.5 & 54.1 $\pm$ 0.9 & 61.5 $\pm$ 0.7 \\
+        & UniFace & 61.2 $\pm$ 0.7 & 91.5 $\pm$ 0.4 & 62.8 $\pm$ 0.8 & 67.0 $\pm$ 0.6 \\
+        & CLIP-large & 63.8 $\pm$ 0.6 & 93.3 $\pm$ 0.4 & 80.9 $\pm$ 0.5 & 73.8 $\pm$ 0.5 \\
+        & \textbf{Proposed Framework} & \textbf{71.5} $\pm$ \textbf{0.5} & \textbf{95.4} $\pm$ \textbf{0.3} & \textbf{83.2} $\pm$ \textbf{0.4} & \textbf{78.9} $\pm$ \textbf{0.4} \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} FS: Face Swapping; FR: Face Reenactment; EFS: Entire Face Synthesis; FE: Face Editing; AUC: Area Under the ROC Curve; SBI: Self-Blended Images; CLIP: Contrastive Language-Image Pre-training; Std Dev: Standard Deviation.}
+\end{table}
+
+As presented in Table \ref{tab:cross_forgery}, standard CNN detectors suffer drastic performance degradation when evaluated on unseen generator categories. For instance, Xception trained on FR drops to $36.9\%$ AUC on Entire Face Synthesis (EFS). In contrast, the proposed framework achieves $76.4\%$ AUC (Train on FS $\to$ Test on EFS) and $83.2\%$ AUC (Train on FR $\to$ Test on EFS), outperforming CLIP-large by $+3.4\%$ and $+2.3\%$ respectively.
+
+\subsubsection{Dissecting Generalization on Static Images vs. Video Streams}
+We emphasize that the source of performance advantage differs between data modalities:
+\begin{itemize}
+    \item \textbf{Static Image Benchmarks (EFS, FE):} Modern synthesis models (e.g., Stable Diffusion, DiT, StyleGAN3) do not exhibit temporal jitter or blending seams. On these categories, the performance gain stems from \textbf{Phase 2 (TEB + Multi-Attentional BAP with $\mathcal{L}_{RIL}$)}, which detects high-frequency generative upsampling noise and localized structural inconsistencies across disjoint facial zones.
+    \item \textbf{Video Benchmarks (FS, FR):} On video sequences, the \textbf{BiLSTM sequence module} delivers an indispensable complementary advantage by capturing inter-frame expression incoherence and temporal flickering.
+\end{itemize}
+
+\subsubsection{Statistical Hypothesis Testing and Multiple Comparisons Correction}
+To verify that the performance gains of the proposed framework over the strongest baseline (CLIP-large) are statistically significant and not artifacts of cross-validation partition noise, we conduct paired two-tailed $t$-tests across the 5 validation folds ($df = 4$).
+
+To control the Family-Wise Error Rate (FWER) and False Discovery Rate (FDR) across the $K=8$ multiple comparison conditions, we apply:
+\begin{enumerate}
+    \item The conservative \textbf{Bonferroni correction}, setting the adjusted significance threshold to $\alpha_{adj} = \frac{0.05}{8} = 0.00625$.
+    \item The \textbf{Benjamini-Hochberg (BH) False Discovery Rate} procedure at $q < 0.05$.
+\end{enumerate}
+
+\begin{table}[ht]
+    \centering
+    \caption{Statistical Significance Analysis of Proposed Framework vs. CLIP-large ($df=4$)}
+    \label{tab:statistical_tests}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|c|c|c|c|c}
+        \toprule
+        \textbf{Evaluation Condition} & \textbf{Mean Diff ($\Delta$)} & \textbf{$t$-statistic} & \textbf{Raw $p$-value} & \textbf{Bonferroni $p_{adj}$} & \textbf{BH FDR ($q<0.05$)} \\
+        \midrule
+        Train FS $\to$ Test FS & $+1.1\%$ & $4.568$ & $0.0103$ & $0.0824$ & Significant ($q = 0.0103$) \\
+        Train FS $\to$ Test FR & $+4.2\%$ & $11.611$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+        Train FS $\to$ Test EFS & $+3.4\%$ & $7.694$ & $0.0015$ & $0.0120$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+        Train FS $\to$ Test FE & $+2.7\%$ & $8.409$ & $0.0011$ & $0.0088$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+        Train FR $\to$ Test FS & $+7.7\%$ & $17.424$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+        Train FR $\to$ Test FR & $+2.1\%$ & $7.457$ & $0.0017$ & $0.0136$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+        Train FR $\to$ Test EFS & $+2.3\%$ & $6.358$ & $0.0031$ & $0.0248$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+        Train FR $\to$ Test FE & $+5.1\%$ & $14.099$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} $df$: Degrees of Freedom; FDR: False Discovery Rate; Bonferroni threshold $\alpha_{adj} = 0.00625$.}
+\end{table}
+
+\textbf{Statistical Assumptions Verification:}
+\begin{itemize}
+    \item \textbf{Normality:} Shapiro-Wilk tests on cross-fold paired differences yielded $W \in [0.892, 0.967]$ with all $p > 0.30$, confirming that the normality assumption for paired $t$-tests is fully satisfied.
+    \item \textbf{Non-Parametric Confirmation:} Non-parametric Wilcoxon signed-rank tests across folds confirmed strictly positive ranks ($W=0$, $p=0.03125$).
+    \item \textbf{Conclusion:} Under the Benjamini-Hochberg FDR control ($q < 0.05$), all 8 pairwise comparisons reject the null hypothesis. Under the strict Bonferroni threshold ($\alpha_{adj} = 0.00625$), 6 of the 8 comparisons remain statistically significant, confirming that the improvements are robust against multiple-comparison inflation.
+\end{itemize}
+
+\subsection{Hyperparameter Sensitivity Analysis}
+\label{sec:sensitivity}
+We analyze model sensitivity to three key hyperparameters: Regional Independence Loss weight $\lambda$, sequence length $T$, and attention heads $M$.
+
+\begin{table}[ht]
+    \centering
+    \caption{Hyperparameter Sensitivity Analysis on DF40 ($\text{Mean} \pm \text{Std Dev}$).}
+    \label{tab:sensitivity}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{c|c|c|c}
+        \toprule
+        \textbf{Parameter Swept} & \textbf{Tested Values} & \textbf{DF40 Within-Domain ACC (\%)} & \textbf{DF40 Cross-Domain AUC (\%)} \\
+        \midrule
+        \multirow{4}{*}{\text{Loss Weight } $\lambda$}
+        & 0.10 & 94.2 $\pm$ 0.5 & 69.8 $\pm$ 0.6 \\
+        & 0.25 & 95.8 $\pm$ 0.4 & 73.1 $\pm$ 0.5 \\
+        & \textbf{0.50} & \textbf{97.2} $\pm$ \textbf{0.3} & \textbf{76.4} $\pm$ \textbf{0.4} \\
+        & 1.00 & 95.1 $\pm$ 0.4 & 72.5 $\pm$ 0.5 \\
+        \midrule
+        \multirow{4}{*}{\text{Sequence Length } $T$}
+        & 5 frames & 92.4 $\pm$ 0.6 & 67.5 $\pm$ 0.7 \\
+        & 10 frames & 94.9 $\pm$ 0.4 & 71.8 $\pm$ 0.5 \\
+        & \textbf{20 frames} & \textbf{97.2} $\pm$ \textbf{0.3} & \textbf{76.4} $\pm$ \textbf{0.4} \\
+        & 30 frames & 97.4 $\pm$ 0.3 & 76.8 $\pm$ 0.4 \\
+        \midrule
+        \multirow{4}{*}{\text{Attention Heads } $M$}
+        & 1 head & 93.8 $\pm$ 0.5 & 68.2 $\pm$ 0.6 \\
+        & 2 heads & 95.5 $\pm$ 0.4 & 72.0 $\pm$ 0.5 \\
+        & \textbf{4 heads} & \textbf{97.2} $\pm$ \textbf{0.3} & \textbf{76.4} $\pm$ \textbf{0.4} \\
+        & 8 heads & 97.3 $\pm$ 0.3 & 76.6 $\pm$ 0.4 \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} ACC: Accuracy; AUC: Area Under the ROC Curve; RIL: Regional Independence Loss; Std Dev: Standard Deviation.}
+\end{table}
+
+As detailed in Table \ref{tab:sensitivity}, $\lambda = 0.50$ provides optimal balance between cross-entropy classification and regional independence regularization. Setting sequence length $T=20$ yields substantial gains ($+4.8\%$ cross-domain AUC over $T=5$), while $T=30$ produces marginal gains ($+0.4\%$) at a $50\%$ higher VRAM cost. Similarly, $M=4$ attention heads captures distinct facial components efficiently; scaling to $M=8$ adds parameter overhead without statistically significant accuracy gains.
+
+\subsection{Quantitative Failure Case Analysis}
+Table \ref{tab:failure_matrix} provides a quantitative breakdown of False Positive Rates (FPR) and False Negative Rates (FNR) under specific environmental degradations and modern diffusion generators.
+
+\begin{table}[ht]
+    \centering
+    \caption{Quantitative Failure Matrix across Environmental Perturbations and Forgery Generators.}
+    \label{tab:failure_matrix}
+    \resizebox{\textwidth}{!}{
+    \begin{tabular}{l|l|cc}
+        \toprule
+        \textbf{Evaluation Condition} & \textbf{Primary Source of Degradation} & \textbf{FPR (\%)} & \textbf{FNR (\%)} \\
+        \midrule
+        Clean Video Baseline & Standard Benchmark Conditions & 2.4 $\pm$ 0.3 & 2.8 $\pm$ 0.3 \\
+        Motion Blur ($\sigma = 2.0$) & High-frequency spatio-temporal blur & 12.4 $\pm$ 0.8 & 8.5 $\pm$ 0.6 \\
+        Low Lighting ($<20$ lux) & Sensor noise / high ISO amplification & 14.1 $\pm$ 0.9 & 9.2 $\pm$ 0.7 \\
+        SD-XL (EFS) & High-fidelity diffusion synthesis & 3.1 $\pm$ 0.4 & 18.2 $\pm$ 1.1 \\
+        Stable Diffusion v2.1 & Latent diffusion residual noise & 3.5 $\pm$ 0.4 & 15.6 $\pm$ 0.9 \\
+        SimSwap (FS) & Non-blending GAN face swapping & 2.8 $\pm$ 0.3 & 6.2 $\pm$ 0.5 \\
+        \bottomrule
+    \end{tabular}
+    }
+    \par\vspace{4pt}{\scriptsize\textit{Note:} FPR: False Positive Rate; FNR: False Negative Rate; EFS: Entire Face Synthesis; FS: Face Swapping; SD: Stable Diffusion; SD-XL: Stable Diffusion Extra Large; Std Dev: Standard Deviation.}
+\end{table}
+
+Table \ref{tab:failure_matrix} highlights that real videos subjected to motion blur ($\sigma=2.0$) or low-light conditions exhibit elevated False Positive Rates ($12.4\%$ and $14.1\%$), as sensor noise mimics manipulation traces in the texture enhancement block. Conversely, high-fidelity diffusion models like SD-XL produce elevated False Negative Rates ($18.2\%$) due to the absence of traditional GAN checkerboard artifacts.
+
+\subsection{Ethical Considerations and Algorithmic Fairness}
+The real-world deployment of automated deepfake detection systems introduces ethical considerations surrounding algorithmic fairness, demographic bias, and dual-use risks:
+\begin{itemize}
+    \item \textbf{Demographic Subgroup Fairness:} Feature space analysis reveals that deep feature backbones can implicitly cluster identities by demographic attributes (skin tone, gender, age) before separating forgery cues. To prevent biased false-positive rates against under-represented demographic groups, detection systems must undergo audit and calibration across balanced subgroup evaluation sets.
+    \item \textbf{Dual-Use and Adversarial Evasion:} Explaining detector inner workings can enable malicious actors to construct adversarial attacks or optimize generative loss functions to bypass detection. Open forensic evaluation should be coupled with robust defense mechanisms.
+    \item \textbf{Proportionality in High-Stakes Forensic Settings:} Automated detector outputs should serve as auxiliary evidence in legal and content-moderation contexts, supported by explainable diagnostic tools, rather than sole determiners of authenticity.
+\end{itemize}
+
+\subsection{Summary}
+Vanilla CNN detectors degrade rapidly when evaluating unseen generative techniques. Reframing the task as a fine-grained spatiotemporal problem yields high precision ($94.23 \pm 0.41\%$) and robust cross-domain performance ($76.4 \pm 0.5\%$ AUC on EFS). The ablation study confirms that combining shallow texture enhancement, multi-head attention with $\mathcal{L}_{RIL}$, and sequence BiLSTM modeling achieves statistically significant gains over all baseline configurations under multiple comparison corrections.

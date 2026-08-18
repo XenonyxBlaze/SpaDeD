@@ -35,9 +35,11 @@
 
 ## ♰ [0x00] THE APOCALYPSE OF THE FALSE IMAGE & CYBERPSYCHOSIS
 
-<table width="100%">
-<tr>
-<td width="65%" valign="top">
+<div align="center">
+<img src="assets/predator_eyes_terminal.svg" width="850" alt="Geometric Hyperbolic Predator Ocular Scanner" style="border: 2px solid #00ffff; border-radius: 8px; box-shadow: 0 0 35px rgba(0, 255, 255, 0.5);" />
+</div>
+
+<br>
 
 ### [0x00.1] THE IDOL CARVED FROM LATENT SILICON
 *"They have mouths, but they speak not: eyes have they, but they see not: they have ears, but they hear not: neither is there any breath in their mouths."* — **Psalm 135:16-17**
@@ -50,13 +52,6 @@ Traditional detectors suffer catastrophic collapse because they search for **fle
 * **[PHASE 1] Shallow Fourier Extraction (TEB)**: Preserving the high-frequency celestial dust of upsampling artifacts.
 * **[PHASE 2] Disjoint Parts-Based Attention (BAP)**: Summoning 4 Cherubic Attention Heads bound across distinct anatomical zones via **Dual Regional Independence Loss ($\mathcal{L}_{RIL}$)**.
 * **[PHASE 3] Recurrent Temporal Judgment (BiLSTM)**: Exposing the flickering pulse of the unliving across a 2-layer sequence memory.
-
-</td>
-<td width="42%" align="center" valign="middle">
-<img src="assets/predator_eyes_terminal.svg" width="380" alt="Geometric Hyperbolic Predator Ocular Scanner" style="border: 2px solid #00ffff; border-radius: 8px; box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);" />
-</td>
-</tr>
-</table>
 
 ---
 
@@ -218,6 +213,9 @@ $$h_{seq} = \frac{1}{T}\sum_{t=1}^T \text{BiLSTM}(x_t, (h_{t-1}, c_{t-1})) \in \
 
 ```bash
 Spatiotemporal_Deepfake_Detection/
+├── notebooks/                    # ♰ [CLOUD_SANCTUARY] Google Colab Automated Pipeline
+│   └── train_spaded_colab.ipynb  # 1-Click Drive mount, GPU verification, & 5-fold training
+│
 ├── paper/                        # ♰ [THE_APOCRYPHA] Publication LaTeX Manuscript
 │   ├── main.tex                  # Master LNCS Springer manuscript
 │   ├── methodology.tex           # Mathematical BAP, dual LRIL, & tensor trace specs
@@ -235,7 +233,10 @@ Spatiotemporal_Deepfake_Detection/
 │   ├── evaluation/               # ROC-AUC, paired t-tests, Bonferroni, BH FDR (q < 0.05)
 │   └── utils/                    # Multi-head attention spatial heatmap visualizer
 │
-├── scripts/                      # ♰ [DIVINE_INGESTION_TOOLS] Ingestion & Acquisition
+├── scripts/                      # ♰ [BASH_&_PYTHON_INGESTION_TOOLS] Resilient Data Pipeline
+│   ├── compress_datasets.sh      # Compresses extracted datasets for Google Drive upload
+│   ├── extract_datasets.sh       # Multi-threaded 7-Zip batch dataset extractor
+│   ├── download_faceforensics.sh # High-speed Bash FaceForensics++ download runner
 │   ├── download_faceforensics.py # Resumable downloader with Windows Sleep Prevention
 │   └── download_datasets.py      # Standard directory builder & dummy sample generator
 │
@@ -250,30 +251,42 @@ Spatiotemporal_Deepfake_Detection/
 
 ---
 
-## ♰ [0x03] RAPID ACTIVATION PROTOCOL
+## ♰ [0x03] RAPID ACTIVATION & CLOUD TRAINING PROTOCOL
 
 <details open>
-<summary><b>♰ [INTERACTIVE LITURGICAL CONSOLE] Click to expand/collapse terminal commands</b></summary>
+<summary><b>♰ [LOCAL & CLOUD EXECUTION HUD] Click to expand command terminal</b></summary>
 <br>
 
-<table>
-<tr>
-<th bgcolor="#161b22"><font color="#00ff66">[CLI] SCRIPTURAL COMMAND</font></th>
-<th bgcolor="#161b22"><font color="#00ffcc">PURPOSE & SYSTEM ACTION</font></th>
-</tr>
-<tr>
-<td><code>pip install -r requirements.txt</code></td>
-<td>Anoints the environment with PyTorch, torchvision, OpenCV, scikit-learn, and tqdm.</td>
-</tr>
-<tr>
-<td><code>python run_pipeline.py --mode verify</code></td>
-<td>Executes end-to-end forward/backward tensor flow verification and gradient check.</td>
-</tr>
-<tr>
-<td><code>python run_pipeline.py --mode stats</code></td>
-<td>Summons paired $t$-tests with Bonferroni and Benjamini-Hochberg FDR adjustments (Table 5).</td>
-</tr>
-</table>
+### 1. Local Verification (Windows / Linux / macOS):
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Verify model tensor flow & gradient propagation
+python run_pipeline.py --mode verify
+
+# 3. Compute statistical significance tests (Bonferroni & Benjamini-Hochberg FDR)
+python run_pipeline.py --mode stats
+```
+
+### 2. High-Throughput Bash Dataset Operations:
+```bash
+# Extract all downloaded archives from ~/Downloads into structured data folders:
+bash scripts/extract_datasets.sh
+
+# Compress local datasets into zip archives for Google Drive upload:
+bash scripts/compress_datasets.sh
+
+# Launch FaceForensics++ download with EU2 mirror & sleep suppression:
+bash scripts/download_faceforensics.sh data/FaceForensics++ EU2 c23 all
+```
+
+### 3. Google Colab / Cloud GPU Training (Google AI Pro 2TB Drive):
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/XenonyxBlaze/spaded/blob/main/notebooks/train_spaded_colab.ipynb)
+
+* Open [`notebooks/train_spaded_colab.ipynb`](file:///c:/Users/ServeSmile%20IT/Projects/Spatiotemporal_Deepfake_Detection/notebooks/train_spaded_colab.ipynb) in Google Colab.
+* Mount your Google Drive with 1-click.
+* Run 5-fold cross-validation with automatic checkpoint mirroring back to `My Drive/SpaDeD_Checkpoints/`.
 
 </details>
 

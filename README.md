@@ -177,30 +177,31 @@ flowchart TD
 <summary><b>♰ [MATHEMATICAL CANON MATRIX] Click to inspect formal governing equations</b></summary>
 <br>
 
-<table>
-<tr>
-<th width="30%" bgcolor="#1f2430"><font color="#00ffcc">Forensic Subsystem</font></th>
-<th width="70%" bgcolor="#1f2430"><font color="#ff007f">Mathematical Governing Formula</font></th>
-</tr>
-<tr>
-<td><b>Retinal Fourier Ingest</b></td>
-<td>$$\mathcal{I}_{aug} = \mathcal{F}^{-1}\Big(\mathcal{M}_{low} \odot \mathcal{F}(I_{noise}) + (1 - \mathcal{M}_{low}) \odot \mathcal{F}(I)\Big)$$</td>
-</tr>
-<tr>
-<td><b>Cherubic BAP Outer Product</b></td>
-<td>$$\mathbf{V} = \mathbf{F} \mathbf{A}^T = [V_1, V_2, V_3, V_4] \in \mathbb{R}^{2304 \times 4}, \quad V_k \leftarrow \frac{V_k}{\|V_k\|_2 + \epsilon}$$</td>
-</tr>
-<tr>
-<td><b>Dual Regional Loss ($\mathcal{L}_{RIL}$)</b></td>
-<td>$$\mathcal{L}_{RIL} = \underbrace{\frac{2}{M(M-1)}\sum_{i<j}\sum_{x,y} A_i(x,y) A_j(x,y)}_{\mathcal{L}_{spatial} \text{ (2D Physical Non-Overlap)}} + \gamma \underbrace{\frac{2}{M(M-1)}\sum_{i<j}\max\big(0, V_i^T V_j - m\big)}_{\mathcal{L}_{feat} \text{ (Feature Orthogonality)}}$$</td>
-</tr>
-<tr>
-<td><b>Linear Bottleneck & BiLSTM</b></td>
-<td>$$x_t = \text{GELU}\Big(\text{LayerNorm}(W_{proj} \cdot [V_1^{(t)}\|\dots\|V_4^{(t)}] + b_{proj})\Big) \in \mathbb{R}^{512}$$
-$$h_{seq} = \frac{1}{T}\sum_{t=1}^T \text{BiLSTM}(x_t, (h_{t-1}, c_{t-1})) \in \mathbb{R}^{512}, \quad \hat{y} = \text{MLP}(h_{seq}) \in \mathbb{R}^2$$</td>
-</tr>
-</table>
+### 1. Retinal Fourier Low-Pass Ingestion ($\text{Mix}_{freq}$)
+Perturbs low-frequency facial structure with noise $I_{noise}$ while strictly preserving high-frequency upsampling artifacts of generative models:
+$$\mathcal{I}_{aug} = \mathcal{F}^{-1}\Big(\mathcal{M}_{low} \odot \mathcal{F}(I_{noise}) + (1 - \mathcal{M}_{low}) \odot \mathcal{F}(I)\Big)$$
 
+---
+
+### 2. Four-Head Bilinear Attention Pooling (BAP Outer Product)
+Computes the matrix outer product between fused tensor $F \in \mathbb{R}^{2304 \times (H \cdot W)}$ and spatial attention maps $A \in \mathbb{R}^{4 \times (H \cdot W)}$:
+$$\mathbf{V} = \mathbf{F} \mathbf{A}^T = \big[V_1, V_2, V_3, V_4\big] \in \mathbb{R}^{2304 \times 4}, \qquad V_k \leftarrow \frac{V_k}{\|V_k\|_2 + \epsilon}$$
+
+---
+
+### 3. Dual Regional Independence Loss ($\mathcal{L}_{RIL}$)
+Enforces physical 2D non-overlap of attention heads ($\mathcal{L}_{spatial}$) and feature orthogonality ($\mathcal{L}_{feat}$) across distinct facial regions:
+$$\mathcal{L}_{RIL} = \underbrace{\frac{2}{M(M-1)}\sum_{i < j}\sum_{x,y} A_i(x,y) A_j(x,y)}_{\mathcal{L}_{spatial} \text{ (2D Physical Non-Overlap)}} + \gamma \underbrace{\frac{2}{M(M-1)}\sum_{i < j}\max\big(0, V_i^T V_j - m\big)}_{\mathcal{L}_{feat} \text{ (Feature Orthogonality)}}$$
+
+---
+
+### 4. Linear Bottleneck & Bidirectional LSTM Recurrence
+Projects 9,216-dim pooled features into a 512-dim bottleneck with LayerNorm, followed by a 2-layer BiLSTM ($d_h=256$) and temporal mean pooling:
+$$x_t = \text{GELU}\Big(\text{LayerNorm}\big(W_{proj} \cdot [V_1^{(t)} \parallel \dots \parallel V_4^{(t)}] + b_{proj}\big)\Big) \in \mathbb{R}^{512}$$
+
+$$h_{seq} = \frac{1}{T}\sum_{t=1}^T \text{BiLSTM}\big(x_t, (h_{t-1}, c_{t-1})\big) \in \mathbb{R}^{512}, \qquad \hat{y} = \text{MLP}(h_{seq}) \in \mathbb{R}^2$$
+
+<br>
 </details>
 
 ---

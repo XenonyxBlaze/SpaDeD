@@ -20,6 +20,18 @@ import requests
 from tqdm import tqdm
 from os.path import join
 
+# Ensure UTF-8 output encoding on Windows consoles to prevent charmap encoding crashes
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 # Windows Power Management flags to prevent Sleep/Hibernate during active downloads
 ES_CONTINUOUS = 0x80000000
 ES_SYSTEM_REQUIRED = 0x00000001
@@ -260,7 +272,7 @@ def download_file_list(filenames, base_url, output_path, category_name="Dataset"
     total_files = len(filenames)
     success_count = 0
 
-    print(f"\n[▶] Starting {category_name} ({total_files} files) -> {output_path}")
+    print(f"\n[>] Starting {category_name} ({total_files} files) -> {output_path}")
     overall_pbar = tqdm(total=total_files, desc=f"Overall [{category_name[:15]}]", ncols=90)
 
     for idx, filename in enumerate(filenames, 1):
@@ -272,7 +284,7 @@ def download_file_list(filenames, base_url, output_path, category_name="Dataset"
         overall_pbar.update(1)
 
     overall_pbar.close()
-    print(f"[✔] Completed {category_name}: {success_count}/{total_files} files downloaded successfully.")
+    print(f"[+] Completed {category_name}: {success_count}/{total_files} files downloaded successfully.")
 
 
 def main(args):

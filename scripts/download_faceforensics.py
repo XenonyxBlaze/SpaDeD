@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """ Downloads FaceForensics++ and Deep Fake Detection public data release.
-Upgraded with:
-1. Windows Sleep/Hibernate Prevention (keeps PC awake during active downloads).
+Integrates with the official TUM FaceForensics script (scripts/ff_dataset.py) while adding:
+1. Windows Sleep/Hibernate Prevention (keeps PC awake during multi-hour downloads).
 2. Real-time per-file and batch progress bars (MB downloaded, MB/s speed, ETA).
 3. Resumable downloads with automatic retry on network drops/sleep recovery.
 4. Atomic file verification (prevents corrupt partial files).
@@ -15,6 +15,7 @@ import time
 import json
 import random
 import ctypes
+import importlib.util
 import requests
 from tqdm import tqdm
 from os.path import join
@@ -72,6 +73,23 @@ TYPE = ['videos', 'masks', 'models']
 SERVERS = ['EU', 'EU2', 'CA']
 
 
+def load_official_script_config():
+    """Dynamically loads configuration from official scripts/ff_dataset.py if present locally."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = ['ff_dataset.py', 'ff_script.py', 'faceforensics_download_v4.py']
+    for candidate in candidates:
+        candidate_path = os.path.join(script_dir, candidate)
+        if os.path.isfile(candidate_path):
+            try:
+                spec = importlib.util.spec_from_file_location("official_ff", candidate_path)
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                return mod
+            except Exception as e:
+                print(f"[!] Note: Could not import {candidate}: {e}")
+    return None
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Downloads FaceForensics++ public data release with progress tracking & sleep prevention.',
@@ -87,22 +105,39 @@ def parse_args():
     parser.add_argument('-t', '--type', type=str, default='videos',
                         help='File type: videos, masks, models.',
                         choices=TYPE)
-    parser.add_argument('--server_url', type=str, default=os.getenv('FF_SERVER_URL', None),
-                        help='Official FaceForensics download server URL (provided upon submitting TUM request form).')
+    parser.add_argument('-n', '--num_videos', type=int, default=None,
+                        help='Select number of videos to download.')
     parser.add_argument('--server', type=str, default='EU',
-                        help='Server mirror region identifier (EU / CA / custom).')
+                        help='Server mirror region identifier (EU / EU2 / CA).',
+                        choices=SERVERS)
+    parser.add_argument('--server_url', type=str, default=os.getenv('FF_SERVER_URL', None),
+                        help='Official FaceForensics download server URL.')
     parser.add_argument('--yes', '-y', action='store_true',
                         help='Automatically accept terms without prompting.')
     args = parser.parse_args()
 
+    official_mod = load_official_script_config()
     server_url = args.server_url
+
+    if not server_url and official_mod is not None:
+        # Resolve server from official module
+        server = args.server
+        if hasattr(official_mod, 'SERVERS') and server in official_mod.SERVERS:
+            if server == 'EU':
+                server_url = 'http://canis.vc.in.tum.de:8100/'
+            elif server == 'EU2':
+                server_url = 'http://kaldir.vc.in.tum.de/faceforensics/'
+            elif server == 'CA':
+                server_url = 'http://falas.cmpt.sfu.ca:8100/'
+        print(f"[+] Loaded official FaceForensics configuration from local script (Mirror: {server}).")
+
     if not server_url:
-        # Prompt user to respect FaceForensics Terms of Service and protect private server endpoints
         print("\n" + "="*75)
         print("[!] FaceForensics++ Terms of Service Compliance Check:")
         print("    In accordance with the FaceForensics research agreement, server endpoints")
         print("    must not be hardcoded in public repositories.")
         print("    Please request access at: https://github.com/ondyari/FaceForensics")
+        print("    and place ff_dataset.py into scripts/ or provide --server_url.")
         print("="*75)
         try:
             server_url = input("\n[?] Enter the FaceForensics server base URL received from TUM: ").strip()
@@ -110,8 +145,8 @@ def parse_args():
             server_url = None
 
         if not server_url:
-            print("\n[!] Error: No server URL provided. You can set the FF_SERVER_URL environment variable")
-            print("    or pass --server_url <URL> when running this script.")
+            print("\n[!] Error: No server URL provided. Set FF_SERVER_URL, pass --server_url,")
+            print("    or place ff_dataset.py into the scripts/ directory.")
             sys.exit(1)
 
     if not server_url.endswith('/'):

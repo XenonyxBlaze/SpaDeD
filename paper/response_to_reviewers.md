@@ -30,7 +30,7 @@ Below is our detailed, point-by-point response to each major concern raised in t
 **Author Response:**  
 We thank the Reviewer for identifying this crucial theoretical discrepancy. The Reviewer is completely correct: cosine similarity between regional feature vectors operates in the latent descriptor space rather than measuring 2D spatial overlap across the feature grid.
 
-To resolve this issue with complete mathematical rigor, we have reformulated $\mathcal{L}_{RIL}$ in **Section 3.4.1 (Equations 8–11)** as a **dual-regularized loss function** that explicitly decouples 2D spatial co-activation from regional feature diversity:
+To resolve this issue with complete mathematical rigor, we have reformulated $\mathcal{L}_{RIL}$ in **Section 3.4 (Equations 9–13)** as a **dual-regularized loss function** that explicitly decouples 2D spatial co-activation from regional feature diversity:
 $$\mathcal{L}_{RIL} = \mathcal{L}_{spatial} + \gamma \cdot \mathcal{L}_{feat}, \quad (\gamma = 1.0)$$
 
 1. **Pairwise Spatial Co-Activation Penalty ($\mathcal{L}_{spatial}$):**  
@@ -52,7 +52,7 @@ $$\mathcal{L}_{RIL} = \mathcal{L}_{spatial} + \gamma \cdot \mathcal{L}_{feat}, \
    * **Emergent Specialization:** The spatial loss encourages spatial separation, while the specific regional specialization of each head is an emergent property learned from task gradients, architectural inductive biases, and input data distribution.
    * **Dual Complementarity:** $\mathcal{L}_{spatial}$ reduces **spatial co-activation** on the 2D grid (*where heads attend*), while $\mathcal{L}_{feat}$ reduces **excessive feature-level similarity** in the 2304-dimensional regional feature space (*what heads represent*). Together, the proposed RIL encourages regional independence through complementary regularization of spatial co-activation and feature-level similarity among attention heads.
 
-* **Manuscript Changes:** Section 3.4.1 (Equations 8–11) and the ablation analysis in Section 4.3 (Table 6) have been thoroughly updated to reflect this dual-regularization framework.
+* **Manuscript Changes:** Section 3.4 (Equations 9–13) and the ablation analysis in Section 4.3 (Table 7) have been thoroughly updated to reflect this dual-regularization framework.
 
 ---
 
@@ -61,7 +61,7 @@ $$\mathcal{L}_{RIL} = \mathcal{L}_{spatial} + \gamma \cdot \mathcal{L}_{feat}, \
 > *"The definition of Bilinear Attention Pooling (BAP) is ambiguous. The manuscript uses the term 'outer product', but does not provide a formal matrix formulation. Furthermore, it is unclear whether feature concatenation ($F_{tex}$ and $F_{sem}$) occurs before or after attention weighting."*
 
 **Author Response:**  
-We appreciate the Reviewer's request for formal clarity. We have revised **Section 3.3.3 (Equations 3–6)** to provide the explicit matrix algebraic definition of Bilinear Attention Pooling and clarify the precise order of tensor operations.
+We appreciate the Reviewer's request for formal clarity. We have revised **Section 3.3.3 (Equations 2–5)** to provide the explicit matrix algebraic definition of Bilinear Attention Pooling and clarify the precise order of tensor operations.
 
 1. **Channel-Wise Concatenation (Prior to Attention):**  
    Let $F_{sem} \in \mathbb{R}^{2048 \times H \times W}$ denote the deep semantic feature map from ResNeXt50 Stage 4 and $F_{tex} \in \mathbb{R}^{256 \times H \times W}$ denote the shallow texture feature map from the TEB ($H=8, W=8$). Channel-wise concatenation occurs **first** to form the unified spatial representation tensor:
@@ -74,7 +74,7 @@ We appreciate the Reviewer's request for formal clarity. We have revised **Secti
    $$V_k = \sum_{x=1}^{H} \sum_{y=1}^{W} A_k(x,y) \cdot F(x,y)$$
    Each regional vector is unit-normalized: $\hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}$, yielding a parts-based descriptor where each head isolates forensic evidence from distinct spatial regions.
 
-* **Manuscript Changes:** Section 3.3.3 (Equations 3–6) and Figure 1 have been revised with the complete matrix formulation and dimensionality flow.
+* **Manuscript Changes:** Section 3.3.3 (Equations 2–5) and Figure 1 have been revised with the complete matrix formulation and dimensionality flow.
 
 ---
 
@@ -83,7 +83,7 @@ We appreciate the Reviewer's request for formal clarity. We have revised **Secti
 > *"The transition between spatial multi-head features and the LSTM temporal model lacks mathematical precision. How are the $M$ regional feature vectors aggregated into the frame-level feature vector $x_t$? What are the exact dimensions at each stage?"*
 
 **Author Response:**  
-We have expanded **Section 3.3.4 (Equations 7–9)** and added **Table 1 (Tensor Dimension Trace Table)** to define every dimensional transition across the entire network:
+We have expanded **Section 3.3.4 (Equations 6–8)** and added **Table 3 (Tensor Dimension Trace Table)** to define every dimensional transition across the entire network:
 
 1. **Aggregation and Linear Bottleneck Projection ($W_{proj}$):**  
    For frame $t \in \{1, \dots, T\}$, the $M=4$ normalized regional vectors $\{\hat{V}_1^{(t)}, \dots, \hat{V}_M^{(t)}\} \subset \mathbb{R}^{2304}$ are concatenated into a single frame descriptor $V_{concat}^{(t)} \in \mathbb{R}^{9216}$ ($4 \times 2304 = 9216$). To prevent parameter explosion in the recurrent cell, $V_{concat}^{(t)}$ is projected to $d_{in}=512$ via a learned linear projection $W_{proj} \in \mathbb{R}^{512 \times 9216}$ with Layer Normalization and GELU activation:
@@ -92,7 +92,7 @@ We have expanded **Section 3.3.4 (Equations 7–9)** and added **Table 1 (Tensor
 2. **Recurrent Sequence Modeling & MLP Classifier:**  
    The sequence $\{x_1, \dots, x_T\} \in \mathbb{R}^{T \times 512}$ ($T=20$) is processed by a 2-layer Bidirectional LSTM with hidden dimension $d_h = 256$ per direction ($h_t \in \mathbb{R}^{512}$). Temporal average pooling yields $h_{seq} = \frac{1}{T}\sum_{t=1}^T h_t \in \mathbb{R}^{512}$, which is classified by an MLP ($512 \to 128 \to 2$) into binary logits $\hat{y} \in \mathbb{R}^2$.
 
-3. **Full Tensor Dimension Trace Table (Table 1):**
+3. **Full Tensor Dimension Trace Table (Table 3):**
 
 | Pipeline Stage | Input Shape | Output Shape | Details / Layer Specification |
 | :--- | :--- | :--- | :--- |
@@ -108,7 +108,7 @@ We have expanded **Section 3.3.4 (Equations 7–9)** and added **Table 1 (Tensor
 | **Temporal Mean Pool** | $(B, 20, 512)$ | $(B, 512)$ | Global descriptor $h_{seq}$ |
 | **MLP Classifier** | $(B, 512)$ | $(B, 2)$ | Binary logits (Real / Fake) |
 
-* **Manuscript Changes:** Section 3.3.4, Equations 7–9, and Table 1 provide the full mathematical and tensor derivation.
+* **Manuscript Changes:** Section 3.3.4, Equations 6–8, and Table 3 provide the full mathematical and tensor derivation.
 
 ---
 
@@ -122,9 +122,9 @@ We thank the Reviewer for pointing out the need for an unambiguous description o
 * **Training Stage:** 5-fold cross-validation is performed *within* a single manipulation family (e.g., Train on Face Swapping [FS], encompassing 10 generator methods). The source identities are partitioned into 5 subject-disjoint folds, yielding 5 distinct trained model checkpoints.
 * **Unseen Generalization Testing:** Each of the 5 trained model checkpoints is independently evaluated on the remaining manipulation categories (Test on Face Reenactment [FR], Entire Face Synthesis [EFS], and Face Editing [FE]).
 * **Strict Unseen Definition:** An "unseen category" represents a manipulation paradigm from which **zero training images, zero video clips, and zero checkpoint weights** were accessible during training.
-* **Reported Metrics:** In Table 4 (Section 4.4.1), each cell reports the $\text{Mean} \pm \text{Standard Deviation}$ across all 5 evaluation checkpoints.
+* **Reported Metrics & Standardized SOTA Baselines:** In Table 8 (Table \ref{tab:cross_forgery}), each cell reports the $\text{Mean} \pm \text{Standard Deviation}$ across all 5 evaluation checkpoints against leading modern 2023--2025 state-of-the-art baselines under standardized DeepfakeBench and DF40 pipelines, with explicit baseline citations (Xception \citep{Chollet2017CVPR, Yan2023DeepfakeBench}, SBI \citep{Shiohara2022SBI, Yan2024DF40}, FreqNet \citep{Chen2024FreqNet} [AAAI 2024], FreqBlender \citep{Huang2024FreqBlender} [NeurIPS 2024], UniFace \citep{Yan2024DF40} [NeurIPS 2024], and CLIP-large \citep{Radford2021CLIP, Yan2024DF40}).
 
-* **Manuscript Changes:** Section 3.2.3 and Section 4.4.1 (Table 4) now explicitly define this protocol.
+* **Manuscript Changes:** Section 3.2.3, Section 4.4.1 (Table 8 / Table \ref{tab:cross_forgery}), and the bibliography have been updated to explicitly define this protocol and cite all baseline models from 2023--2025.
 
 ---
 
@@ -142,7 +142,7 @@ We appreciate the Reviewer's insightful observation. We have added **Section 3.2
 2. **Modality-Specific Empirical Dissection (Section 4.4.2):**  
    We explicitly dissect the source of performance across modalities:
    * **Static Image Categories (EFS, FE):** The high performance ($83.2\%$ AUC on EFS) is driven primarily by **Phase 2 (TEB + Multi-Attentional BAP with $\mathcal{L}_{RIL}$)**, which detects microscopic high-frequency generative upsampling noise and localized facial inconsistencies.
-   * **Video Categories (FS, FR):** The **BiLSTM sequence module** delivers an essential complementary boost ($+2.58\%$ AUC on Celeb-DF, Table 2) by capturing inter-frame jitter, boundary flickering, and irregular blinking dynamics.
+   * **Video Categories (FS, FR):** The **BiLSTM sequence module** delivers an essential complementary boost ($+2.58\%$ AUC on Celeb-DF, Table 6) by capturing inter-frame jitter, boundary flickering, and irregular blinking dynamics.
 
 * **Manuscript Changes:** Section 3.2.4 and Section 4.4.2 explicitly document this modality separation and fixed-point analysis.
 
@@ -167,13 +167,13 @@ We completely agree with the Reviewer that frame-level splitting introduces arti
 > *"The statistical comparison lacks paired tests across cross-validation folds and does not account for the multiple testing problem when evaluating across multiple forgery categories."*
 
 **Author Response:**  
-We thank the Reviewer for emphasizing statistical rigor. We have added **Section 4.4.3 and Table 5**, conducting two-tailed paired $t$-tests across the 5 cross-validation folds ($df = 4$) with family-wise error rate (FWER) and false discovery rate (FDR) corrections:
+We thank the Reviewer for emphasizing statistical rigor. We have added **Section 4.4.3 and Table 9**, conducting two-tailed paired $t$-tests across the 5 cross-validation folds ($df = 4$) with family-wise error rate (FWER) and false discovery rate (FDR) corrections:
 
 1. **Multiple Comparisons Adjustments across $K=8$ Evaluation Conditions:**
    * **Bonferroni Correction:** Sets the conservative adjusted threshold to $\alpha_{adj} = \frac{0.05}{8} = 0.00625$.
    * **Benjamini-Hochberg (BH) FDR:** Controls false discovery rate at $q < 0.05$.
 
-2. **Statistical Significance Table (Table 5):**
+2. **Statistical Significance Table (Table 9):**
 
 | Evaluation Condition | Mean Diff ($\Delta$) | $t$-statistic | Raw $p$-value | Bonferroni $p_{adj}$ | BH FDR ($q<0.05$) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -191,7 +191,7 @@ We thank the Reviewer for emphasizing statistical rigor. We have added **Section
    * **Non-Parametric Confirmation:** Wilcoxon signed-rank tests yielded $W=0, p=0.03125$.
    * **Conclusion:** All 8 cross-forgery conditions reject the null hypothesis under Benjamini-Hochberg FDR control ($q < 0.05$), and 6 of 8 remain significant under the strict Bonferroni threshold ($\alpha_{adj} = 0.00625$).
 
-* **Manuscript Changes:** Section 4.4.3 and Table 5 document the full statistical analysis.
+* **Manuscript Changes:** Section 4.4.3 and Table 9 document the full statistical analysis.
 
 ---
 

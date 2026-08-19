@@ -59,7 +59,7 @@ To resolve this issue with complete mathematical rigor, we have reformulated $\m
     \item \textbf{Dual Complementarity:} $\mathcal{L}_{spatial}$ reduces \textbf{spatial co-activation} on the 2D grid (\textit{where heads attend}), while $\mathcal{L}_{feat}$ reduces \textbf{excessive feature-level similarity} in the 2304-dimensional regional feature space (\textit{what heads represent}). Together, the proposed RIL encourages regional independence through complementary regularization of spatial co-activation and feature-level similarity among attention heads.
 \end{itemize}
 
-\paragraph{Manuscript Changes:} Section 3.4.1 (Equations 8--11) and the ablation analysis in Section 4.3 (Table 6) have been thoroughly updated.
+\paragraph{Manuscript Changes:} Section 3.4 (Equations 9--13) and the ablation analysis in Section 4.3 (Table 7) have been thoroughly updated.
 
 \bigskip
 
@@ -69,7 +69,7 @@ To resolve this issue with complete mathematical rigor, we have reformulated $\m
 \textit{``The definition of Bilinear Attention Pooling (BAP) is ambiguous. The manuscript uses the term `outer product', but does not provide a formal matrix formulation. Furthermore, it is unclear whether feature concatenation ($F_{tex}$ and $F_{sem}$) occurs before or after attention weighting.''}
 \end{tcolorbox}
 
-\noindent\textbf{Author Response:} We appreciate the Reviewer's request for formal clarity. We have revised \textbf{Section 3.3.3 (Equations 3--6)} to provide the explicit matrix algebraic definition of Bilinear Attention Pooling and clarify the precise order of tensor operations.
+\noindent\textbf{Author Response:} We appreciate the Reviewer's request for formal clarity. We have revised \textbf{Section 3.3.3 (Equations 2--5)} to provide the explicit matrix algebraic definition of Bilinear Attention Pooling and clarify the precise order of tensor operations.
 
 \begin{enumerate}
     \item \textbf{Channel-Wise Concatenation (Prior to Attention):}  
@@ -90,7 +90,7 @@ To resolve this issue with complete mathematical rigor, we have reformulated $\m
     Each regional vector is unit-normalized: $\hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}$, yielding a parts-based descriptor where each head isolates forensic evidence from distinct spatial regions.
 \end{enumerate}
 
-\paragraph{Manuscript Changes:} Section 3.3.3 (Equations 3--6) and Figure 1 have been revised with the complete matrix formulation and dimensionality flow.
+\paragraph{Manuscript Changes:} Section 3.3.3 (Equations 2--5) and Figure 1 have been revised with the complete matrix formulation and dimensionality flow.
 
 \bigskip
 
@@ -100,7 +100,7 @@ To resolve this issue with complete mathematical rigor, we have reformulated $\m
 \textit{``The transition between spatial multi-head features and the LSTM temporal model lacks mathematical precision. How are the $M$ regional feature vectors aggregated into the frame-level feature vector $x_t$? What are the exact dimensions at each stage?''}
 \end{tcolorbox}
 
-\noindent\textbf{Author Response:} We have expanded \textbf{Section 3.3.4 (Equations 7--9)} and added \textbf{Table 1 (Tensor Dimension Trace Table)} to define every dimensional transition across the entire network:
+\noindent\textbf{Author Response:} We have expanded \textbf{Section 3.3.4 (Equations 6--8)} and added \textbf{Table 3 (Tensor Dimension Trace Table)} to define every dimensional transition across the entire network:
 
 \begin{enumerate}
     \item \textbf{Aggregation and Linear Bottleneck Projection ($W_{proj}$):}  
@@ -115,7 +115,7 @@ To resolve this issue with complete mathematical rigor, we have reformulated $\m
 
 \begin{table}[ht]
 \centering
-\caption{Full Tensor Dimension Trace across the Proposed Architecture}
+\caption{Full Tensor Dimension Trace across the Proposed Architecture (Table 3 in Manuscript)}
 \label{tab:rebuttal_dimensions}
 \resizebox{\textwidth}{!}{
 \begin{tabular}{l|c|c|l}
@@ -138,7 +138,7 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
 }
 \end{table}
 
-\paragraph{Manuscript Changes:} Section 3.3.4, Equations 7--9, and Table 1 provide the full mathematical and tensor derivation.
+\paragraph{Manuscript Changes:} Section 3.3.4, Equations 6--8, and Table 3 provide the full mathematical and tensor derivation.
 
 \bigskip
 
@@ -154,10 +154,10 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
     \item \textbf{Training Stage:} 5-fold cross-validation is performed \textit{within} a single manipulation family (e.g., Train on Face Swapping [FS], encompassing 10 generator methods). The source identities are partitioned into 5 subject-disjoint folds, yielding 5 distinct trained model checkpoints.
     \item \textbf{Unseen Generalization Testing:} Each of the 5 trained model checkpoints is independently evaluated on the remaining manipulation categories (Test on Face Reenactment [FR], Entire Face Synthesis [EFS], and Face Editing [FE]).
     \item \textbf{Strict Unseen Definition:} An ``unseen category'' represents a manipulation paradigm from which \textbf{zero training images, zero video clips, and zero checkpoint weights} were accessible during training.
-    \item \textbf{Reported Metrics:} In Table 4 (Section 4.4.1), each cell reports the $\text{Mean} \pm \text{Standard Deviation}$ across all 5 evaluation checkpoints.
+    \item \textbf{Reported Metrics \& Standardized SOTA Baselines:} In Table \ref{tab:cross_forgery} (Table 8 in Manuscript), each cell reports the $\text{Mean} \pm \text{Standard Deviation}$ across all 5 evaluation checkpoints against leading modern 2023--2025 state-of-the-art baselines under standardized DeepfakeBench \citep{Yan2023DeepfakeBench} and DF40 \citep{Yan2024DF40} pipelines, with explicit baseline citations (Xception \citep{Chollet2017CVPR, Yan2023DeepfakeBench}, SBI \citep{Shiohara2022SBI, Yan2024DF40}, FreqNet \citep{Chen2024FreqNet} [AAAI 2024], FreqBlender \citep{Huang2024FreqBlender} [NeurIPS 2024], UniFace \citep{Yan2024DF40} [NeurIPS 2024], and CLIP-large \citep{Radford2021CLIP, Yan2024DF40}).
 \end{itemize}
 
-\paragraph{Manuscript Changes:} Section 3.2.3 and Section 4.4.1 (Table 4) now explicitly define this protocol.
+\paragraph{Manuscript Changes:} Section 3.2.3, Section 4.4.1 (Table 8 / Table \ref{tab:cross_forgery}), and the references list have been updated to explicitly define this protocol and cite all baseline models from 2023--2025.
 
 \bigskip
 
@@ -180,7 +180,7 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
     We explicitly dissect the source of performance across modalities:
     \begin{itemize}
         \item \textbf{Static Image Categories (EFS, FE):} The high performance ($83.2\%$ AUC on EFS) is driven primarily by \textbf{Phase 2 (TEB + Multi-Attentional BAP with $\mathcal{L}_{RIL}$)}, which detects microscopic high-frequency generative upsampling noise and localized facial inconsistencies.
-        \item \textbf{Video Categories (FS, FR):} The \textbf{BiLSTM sequence module} delivers an essential complementary boost ($+2.58\%$ AUC on Celeb-DF, Table 2) by capturing inter-frame jitter, boundary flickering, and irregular blinking dynamics.
+        \item \textbf{Video Categories (FS, FR):} The \textbf{BiLSTM sequence module} delivers an essential complementary boost ($+2.58\%$ AUC on Celeb-DF, Table 6 in Manuscript) by capturing inter-frame jitter, boundary flickering, and irregular blinking dynamics.
     \end{itemize}
 \end{enumerate}
 
@@ -197,7 +197,7 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
 \noindent\textbf{Author Response:} We completely agree with the Reviewer that frame-level splitting introduces artificial inflation. We have added \textbf{Section 3.2.2} to explicitly guarantee that our evaluation is strictly \textbf{leakage-free}:
 
 \begin{itemize}
-    \item \textbf{Subject-Disjoint Partitioning ($0\%$ Overlap):} In FaceForensics++ (1,000 source videos), DF40, and Celeb-DF (590 celebrity identities), partitioning is executed strictly at the \textbf{source video and subject identity level} prior to frame extraction. All manipulated variations derived from subject identity $k$ are assigned exclusively to Fold $k$. Zero frames or videos of any subject in the test set ever appear in the training set.
+    \item \textbf{Subject-Disjoint Partitioning ($0\%$ Overlap):} In FaceForensics++ (1,000 source videos), DF40, and Celeb-DF (590 celebrity identities), partitioning is executed strictly at the **source video and subject identity level** prior to frame extraction. All manipulated variations derived from subject identity $k$ are assigned exclusively to Fold $k$. Zero frames or videos of any subject in the test set ever appear in the training set.
     \item \textbf{Sequence Encapsulation:} Temporal clips of length $T=20$ frames are extracted strictly within individual video boundaries post-partitioning. Sliding windows never cross video boundaries.
 \end{itemize}
 
@@ -211,7 +211,7 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
 \textit{``The statistical comparison lacks paired tests across cross-validation folds and does not account for the multiple testing problem when evaluating across multiple forgery categories.''}
 \end{tcolorbox}
 
-\noindent\textbf{Author Response:} We thank the Reviewer for emphasizing statistical rigor. We have added \textbf{Section 4.4.3 and Table 5}, conducting two-tailed paired $t$-tests across the 5 cross-validation folds ($df = 4$) with family-wise error rate (FWER) and false discovery rate (FDR) corrections:
+\noindent\textbf{Author Response:} We thank the Reviewer for emphasizing statistical rigor. We have added \textbf{Section 4.4.3 and Table 9}, conducting two-tailed paired $t$-tests across the 5 cross-validation folds ($df = 4$) with family-wise error rate (FWER) and false discovery rate (FDR) corrections:
 
 \begin{enumerate}
     \item \textbf{Multiple Comparisons Adjustments across $K=8$ Evaluation Conditions:}
@@ -220,7 +220,7 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
         \item \textbf{Benjamini-Hochberg (BH) FDR:} Controls false discovery rate at $q < 0.05$.
     \end{itemize}
 
-    \item \textbf{Statistical Significance Table (Table 5):}
+    \item \textbf{Statistical Significance Table (Table 9 in Manuscript):}
 \end{enumerate}
 
 \begin{table}[ht]
@@ -255,7 +255,7 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
     \end{itemize}
 \end{enumerate}
 
-\paragraph{Manuscript Changes:} Section 4.4.3 and Table 5 document the full statistical analysis.
+\paragraph{Manuscript Changes:} Section 4.4.3 and Table 9 document the full statistical analysis.
 
 \bigskip
 

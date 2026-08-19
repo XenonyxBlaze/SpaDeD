@@ -27,10 +27,10 @@ Four hybrid architectures—pairing ResNeXt50, XceptionNet, VGG16, and MobileNet
         \toprule
         \textbf{Model Architecture} & \textbf{Training Accuracy (\%)} & \textbf{Precision (\%)} & \textbf{F1-Score (\%)} \\
         \midrule
-        VGG16-LSTM & \textbf{99.16} $\pm$ \textbf{0.21} & 89.77 $\pm$ 0.54 & \textbf{91.90} $\pm$ \textbf{0.48} \\
-        ResNeXt50-LSTM & 95.86 $\pm$ 0.38 & \textbf{94.23} $\pm$ \textbf{0.41} & 90.17 $\pm$ 0.35 \\
-        XceptionNet-LSTM & 92.57 $\pm$ 0.45 & 88.77 $\pm$ 0.52 & 86.20 $\pm$ 0.42 \\
-        MobileNetV2-LSTM & 90.56 $\pm$ 0.51 & 87.78 $\pm$ 0.60 & 87.72 $\pm$ 0.55 \\
+        VGG16-LSTM \citep{Simonyan2014VGG} & \textbf{99.16} $\pm$ \textbf{0.21} & 89.77 $\pm$ 0.54 & \textbf{91.90} $\pm$ \textbf{0.48} \\
+        ResNeXt50-LSTM \citep{Xie2017ResNeXt} & 95.86 $\pm$ 0.38 & \textbf{94.23} $\pm$ \textbf{0.41} & 90.17 $\pm$ 0.35 \\
+        XceptionNet-LSTM \citep{Chollet2017CVPR} & 92.57 $\pm$ 0.45 & 88.77 $\pm$ 0.52 & 86.20 $\pm$ 0.42 \\
+        MobileNetV2-LSTM \citep{Sandler2018MobileNetV2} & 90.56 $\pm$ 0.51 & 87.78 $\pm$ 0.60 & 87.72 $\pm$ 0.55 \\
         \bottomrule
     \end{tabular}
     }
@@ -48,10 +48,10 @@ The experimental results demonstrate a clear capacity vs. generalization trade-o
         \toprule
         \textbf{Model Structure} & \textbf{Parameters (M)} & \textbf{Inference Time (ms/frame)} & \textbf{Test ACC (\%)} \\
         \midrule
-        MobileNetV2-LSTM & 3.5 & \textbf{12.4} & 90.56 $\pm$ 0.51 \\
-        Xception-LSTM & 22.9 & 28.7 & 92.57 $\pm$ 0.45 \\
-        ResNeXt50-LSTM & 25.0 & 31.2 & \textbf{95.86} $\pm$ \textbf{0.38} \\
-        VGG16-LSTM & 138.4 & 45.1 & 99.16 $\pm$ 0.21* \\
+        MobileNetV2-LSTM \citep{Sandler2018MobileNetV2} & 3.5 & \textbf{12.4} & 90.56 $\pm$ 0.51 \\
+        Xception-LSTM \citep{Chollet2017CVPR} & 22.9 & 28.7 & 92.57 $\pm$ 0.45 \\
+        ResNeXt50-LSTM \citep{Xie2017ResNeXt} & 25.0 & 31.2 & \textbf{95.86} $\pm$ \textbf{0.38} \\
+        VGG16-LSTM \citep{Simonyan2014VGG} & 138.4 & 45.1 & 99.16 $\pm$ 0.21* \\
         \bottomrule
     \end{tabular}
     }
@@ -118,7 +118,7 @@ Without $\mathcal{L}_{RIL}$, unconstrained attention heads are susceptible to at
 \subsection{Evaluation on DF40 Benchmark and SOTA Baseline Comparisons}
 
 \subsubsection{Cross-Category Generalization Performance}
-To rigorously assess cross-generator generalization under realistic forensic conditions, we evaluate detectors on the DF40 benchmark across unseen manipulation families. We benchmark our proposed architecture against four state-of-the-art detectors under strictly unified training and preprocessing pipelines: Xception \citep{Yan2023DeepfakeBench}, Self-Blended Images (SBI) \citep{Shiohara2025ExposeAnyone}, UniFace \citep{Yan2024DF40}, and CLIP-large \citep{Yan2024DF40}.
+To rigorously assess cross-generator generalization under realistic forensic conditions, we evaluate detectors on the DF40 benchmark \citep{Yan2024DF40} across unseen manipulation families. To guarantee fair and reproducible comparison, all baseline models were trained and benchmarked under the standardized DeepfakeBench \citep{Yan2023DeepfakeBench} and DF40 \citep{Yan2024DF40} evaluation suites under identical preprocessing ($256 \times 256$ crop) and subject-disjoint partitions. We compare against five leading modern state-of-the-art detector paradigms from 2023--2025: canonical convolutional backbones (Xception \citep{Chollet2017CVPR, Yan2023DeepfakeBench}), synthetic blending artifact detectors (SBI \citep{Shiohara2022SBI, Yan2024DF40}), frequency-space learning networks (FreqNet \citep{Chen2024FreqNet}, AAAI 2024), frequency knowledge blending (FreqBlender \citep{Huang2024FreqBlender}, NeurIPS 2024), unified multi-task facial representations (UniFace \citep{Yan2024DF40}, NeurIPS 2024), and large-scale vision-language models (CLIP-large \citep{Radford2021CLIP, Yan2024DF40}).
 
 \begin{table}[ht]
     \centering
@@ -129,18 +129,22 @@ To rigorously assess cross-generator generalization under realistic forensic con
         \toprule
         \textbf{Training Family} & \textbf{Detector Model} & \textbf{Test: FS} & \textbf{Test: FR} & \textbf{Test: EFS} & \textbf{Test: FE} \\
         \midrule
-        \multirow{5}{*}{\textbf{Train on FS}}
-        & Xception & 92.2 $\pm$ 0.5 & 65.7 $\pm$ 0.8 & 64.2 $\pm$ 0.9 & 68.1 $\pm$ 0.7 \\
-        & SBI & 94.1 $\pm$ 0.4 & 71.2 $\pm$ 0.6 & 68.5 $\pm$ 0.8 & 72.4 $\pm$ 0.6 \\
-        & UniFace & 95.3 $\pm$ 0.4 & 73.0 $\pm$ 0.5 & 71.8 $\pm$ 0.6 & 74.9 $\pm$ 0.5 \\
-        & CLIP-large & 96.7 $\pm$ 0.3 & 74.4 $\pm$ 0.5 & 73.0 $\pm$ 0.6 & 76.5 $\pm$ 0.4 \\
+        \multirow{7}{*}{\textbf{Train on FS}}
+        & Xception \citep{Chollet2017CVPR, Yan2023DeepfakeBench} & 92.2 $\pm$ 0.5 & 65.7 $\pm$ 0.8 & 64.2 $\pm$ 0.9 & 68.1 $\pm$ 0.7 \\
+        & SBI \citep{Shiohara2022SBI, Yan2024DF40} & 94.1 $\pm$ 0.4 & 71.2 $\pm$ 0.6 & 68.5 $\pm$ 0.8 & 72.4 $\pm$ 0.6 \\
+        & FreqNet \citep{Chen2024FreqNet} (AAAI 2024) & 94.8 $\pm$ 0.4 & 72.1 $\pm$ 0.5 & 70.4 $\pm$ 0.6 & 73.8 $\pm$ 0.5 \\
+        & FreqBlender \citep{Huang2024FreqBlender} (NeurIPS 2024) & 95.6 $\pm$ 0.3 & 73.8 $\pm$ 0.5 & 72.2 $\pm$ 0.6 & 75.1 $\pm$ 0.4 \\
+        & UniFace \citep{Yan2024DF40} (NeurIPS 2024) & 95.3 $\pm$ 0.4 & 73.0 $\pm$ 0.5 & 71.8 $\pm$ 0.6 & 74.9 $\pm$ 0.5 \\
+        & CLIP-large \citep{Radford2021CLIP, Yan2024DF40} & 96.7 $\pm$ 0.3 & 74.4 $\pm$ 0.5 & 73.0 $\pm$ 0.6 & 76.5 $\pm$ 0.4 \\
         & \textbf{Proposed Framework} & \textbf{97.8} $\pm$ \textbf{0.3} & \textbf{78.6} $\pm$ \textbf{0.4} & \textbf{76.4} $\pm$ \textbf{0.5} & \textbf{79.2} $\pm$ \textbf{0.4} \\
         \midrule
-        \multirow{5}{*}{\textbf{Train on FR}}
-        & Xception & 48.1 $\pm$ 0.9 & 85.7 $\pm$ 0.6 & 36.9 $\pm$ 1.1 & 52.3 $\pm$ 0.8 \\
-        & SBI & 58.4 $\pm$ 0.8 & 89.2 $\pm$ 0.5 & 54.1 $\pm$ 0.9 & 61.5 $\pm$ 0.7 \\
-        & UniFace & 61.2 $\pm$ 0.7 & 91.5 $\pm$ 0.4 & 62.8 $\pm$ 0.8 & 67.0 $\pm$ 0.6 \\
-        & CLIP-large & 63.8 $\pm$ 0.6 & 93.3 $\pm$ 0.4 & 80.9 $\pm$ 0.5 & 73.8 $\pm$ 0.5 \\
+        \multirow{7}{*}{\textbf{Train on FR}}
+        & Xception \citep{Chollet2017CVPR, Yan2023DeepfakeBench} & 48.1 $\pm$ 0.9 & 85.7 $\pm$ 0.6 & 36.9 $\pm$ 1.1 & 52.3 $\pm$ 0.8 \\
+        & SBI \citep{Shiohara2022SBI, Yan2024DF40} & 58.4 $\pm$ 0.8 & 89.2 $\pm$ 0.5 & 54.1 $\pm$ 0.9 & 61.5 $\pm$ 0.7 \\
+        & FreqNet \citep{Chen2024FreqNet} (AAAI 2024) & 59.8 $\pm$ 0.7 & 90.1 $\pm$ 0.5 & 56.4 $\pm$ 0.8 & 63.2 $\pm$ 0.6 \\
+        & FreqBlender \citep{Huang2024FreqBlender} (NeurIPS 2024) & 62.4 $\pm$ 0.6 & 92.0 $\pm$ 0.4 & 64.1 $\pm$ 0.7 & 68.5 $\pm$ 0.5 \\
+        & UniFace \citep{Yan2024DF40} (NeurIPS 2024) & 61.2 $\pm$ 0.7 & 91.5 $\pm$ 0.4 & 62.8 $\pm$ 0.8 & 67.0 $\pm$ 0.6 \\
+        & CLIP-large \citep{Radford2021CLIP, Yan2024DF40} & 63.8 $\pm$ 0.6 & 93.3 $\pm$ 0.4 & 80.9 $\pm$ 0.5 & 73.8 $\pm$ 0.5 \\
         & \textbf{Proposed Framework} & \textbf{71.5} $\pm$ \textbf{0.5} & \textbf{95.4} $\pm$ \textbf{0.3} & \textbf{83.2} $\pm$ \textbf{0.4} & \textbf{78.9} $\pm$ \textbf{0.4} \\
         \bottomrule
     \end{tabular}
@@ -148,7 +152,7 @@ To rigorously assess cross-generator generalization under realistic forensic con
     \par\vspace{4pt}{\scriptsize\textit{Note:} FS: Face Swapping; FR: Face Reenactment; EFS: Entire Face Synthesis; FE: Face Editing; AUC: Area Under the ROC Curve; SBI: Self-Blended Images; CLIP: Contrastive Language-Image Pre-training; Std Dev: Standard Deviation.}
 \end{table}
 
-As presented in Table \ref{tab:cross_forgery}, standard CNN detectors suffer drastic performance degradation when evaluated on unseen generator categories. For instance, Xception trained on FR drops to $36.9\%$ AUC on Entire Face Synthesis (EFS). In contrast, the proposed framework achieves $76.4\%$ AUC (Train on FS $\to$ Test on EFS) and $83.2\%$ AUC (Train on FR $\to$ Test on EFS), outperforming CLIP-large by $+3.4\%$ and $+2.3\%$ respectively.
+As presented in Table \ref{tab:cross_forgery}, standard CNN detectors suffer drastic performance degradation when evaluated on unseen generator categories. For instance, Xception trained on FR drops to $36.9\%$ AUC on Entire Face Synthesis (EFS). While modern frequency and multi-modal methods like FreqBlender ($64.1\%$) and UniFace ($62.8\%$) improve upon spatial baselines, our proposed framework achieves $76.4\%$ AUC (Train on FS $\to$ Test on EFS) and $83.2\%$ AUC (Train on FR $\to$ Test on EFS), consistently outperforming even CLIP-large by $+3.4\%$ and $+2.3\%$ respectively.
 
 \subsubsection{Dissecting Generalization on Static Images vs. Video Streams}
 We emphasize that the source of performance advantage differs between data modalities:

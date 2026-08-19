@@ -177,14 +177,14 @@ We thank the Reviewer for emphasizing statistical rigor. We have added **Section
 
 | Evaluation Condition | Mean Diff ($\Delta$) | $t$-statistic | Raw $p$-value | Bonferroni $p_{adj}$ | BH FDR ($q<0.05$) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Train FS $\to$ Test FS** | $+1.1\%$ | $4.568$ | $0.0103$ | $0.0822$ | Significant ($q = 0.0103$) |
-| **Train FS $\to$ Test FR** | $+4.2\%$ | $11.611$ | $0.00031$ | $0.0025$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FS $\to$ Test EFS** | $+3.4\%$ | $7.694$ | $0.0015$ | $0.0123$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FS $\to$ Test FE** | $+2.7\%$ | $8.409$ | $0.0011$ | $0.0088$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FR $\to$ Test FS** | $+7.7\%$ | $17.424$ | $0.00006$ | $0.0005$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FR $\to$ Test FR** | $+2.1\%$ | $7.457$ | $0.0017$ | $0.0138$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FR $\to$ Test EFS** | $+2.3\%$ | $6.358$ | $0.0031$ | $0.0251$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FR $\to$ Test FE** | $+5.1\%$ | $14.099$ | $0.00015$ | $0.0012$ | **Significant** ($p < \alpha_{adj}$) |
+| **Train FS $\to$ Test FS** | $+1.1\%$ | $4.568$ | $0.0103$ | $0.0824$ | Significant ($q = 0.0103$) |
+| **Train FS $\to$ Test FR** | $+4.2\%$ | $11.611$ | $0.00031$ | $0.0025$ | **Significant** ($q = 0.0008$) |
+| **Train FS $\to$ Test EFS** | $+3.4\%$ | $7.694$ | $0.0015$ | $0.0120$ | **Significant** ($q = 0.0023$) |
+| **Train FS $\to$ Test FE** | $+2.7\%$ | $8.409$ | $0.0011$ | $0.0088$ | **Significant** ($q = 0.0022$) |
+| **Train FR $\to$ Test FS** | $+7.7\%$ | $17.424$ | $0.00006$ | $0.0005$ | **Significant** ($q = 0.0005$) |
+| **Train FR $\to$ Test FR** | $+2.1\%$ | $7.457$ | $0.0017$ | $0.0136$ | **Significant** ($q = 0.0023$) |
+| **Train FR $\to$ Test EFS** | $+2.3\%$ | $6.358$ | $0.0031$ | $0.0248$ | **Significant** ($q = 0.0036$) |
+| **Train FR $\to$ Test FE** | $+5.1\%$ | $14.099$ | $0.00015$ | $0.0012$ | **Significant** ($q = 0.0006$) |
 
 3. **Statistical Assumption Verification:**
    * **Normality:** Shapiro-Wilk tests yielded $W \in [0.892, 0.967]$ with all $p > 0.30$, verifying normality.

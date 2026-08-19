@@ -179,18 +179,18 @@ To control the Family-Wise Error Rate (FWER) and False Discovery Rate (FDR) acro
         \toprule
         \textbf{Evaluation Condition} & \textbf{Mean Diff ($\Delta$)} & \textbf{$t$-statistic} & \textbf{Raw $p$-value} & \textbf{Bonferroni $p_{adj}$} & \textbf{BH FDR ($q<0.05$)} \\
         \midrule
-        Train FS $\to$ Test FS & $+1.1\%$ & $4.568$ & $0.0103$ & $0.0822$ & Significant ($q = 0.0103$) \\
-        Train FS $\to$ Test FR & $+4.2\%$ & $11.611$ & $0.00031$ & $0.0025$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-        Train FS $\to$ Test EFS & $+3.4\%$ & $7.694$ & $0.0015$ & $0.0123$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-        Train FS $\to$ Test FE & $+2.7\%$ & $8.409$ & $0.0011$ & $0.0088$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-        Train FR $\to$ Test FS & $+7.7\%$ & $17.424$ & $0.00006$ & $0.0005$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-        Train FR $\to$ Test FR & $+2.1\%$ & $7.457$ & $0.0017$ & $0.0138$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-        Train FR $\to$ Test EFS & $+2.3\%$ & $6.358$ & $0.0031$ & $0.0251$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-        Train FR $\to$ Test FE & $+5.1\%$ & $14.099$ & $0.00015$ & $0.0012$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+        Train FS $\to$ Test FS & $+1.1\%$ & $4.568$ & $0.0103$ & $0.0824$ & Significant ($q = 0.0103$) \\
+        Train FS $\to$ Test FR & $+4.2\%$ & $11.611$ & $0.00031$ & $0.0025$ & \textbf{Significant} ($q = 0.0008$) \\
+        Train FS $\to$ Test EFS & $+3.4\%$ & $7.694$ & $0.0015$ & $0.0120$ & \textbf{Significant} ($q = 0.0023$) \\
+        Train FS $\to$ Test FE & $+2.7\%$ & $8.409$ & $0.0011$ & $0.0088$ & \textbf{Significant} ($q = 0.0022$) \\
+        Train FR $\to$ Test FS & $+7.7\%$ & $17.424$ & $0.00006$ & $0.0005$ & \textbf{Significant} ($q = 0.0005$) \\
+        Train FR $\to$ Test FR & $+2.1\%$ & $7.457$ & $0.0017$ & $0.0136$ & \textbf{Significant} ($q = 0.0023$) \\
+        Train FR $\to$ Test EFS & $+2.3\%$ & $6.358$ & $0.0031$ & $0.0248$ & \textbf{Significant} ($q = 0.0036$) \\
+        Train FR $\to$ Test FE & $+5.1\%$ & $14.099$ & $0.00015$ & $0.0012$ & \textbf{Significant} ($q = 0.0006$) \\
         \bottomrule
     \end{tabular}
     }
-    \par\vspace{4pt}{\scriptsize\textit{Note:} $df$: Degrees of Freedom; FDR: False Discovery Rate; Bonferroni threshold $\alpha_{adj} = \frac{0.05}{8} = 0.00625$.}
+    \par\vspace{4pt}{\scriptsize\textit{Note:} $df$: Degrees of Freedom; FDR: False Discovery Rate; Bonferroni threshold $\alpha_{adj} = \frac{0.05}{8} = 0.00625$; BH $q$-values enforce monotonic step-up correction.}
 \end{table}
 
 \textbf{Statistical Assumptions Verification:}

@@ -82,11 +82,20 @@ def apply_multiple_comparison_corrections(
     bh_significant = [False] * m
     bh_q_values = [1.0] * m
     
-    for rank, (orig_idx, res) in enumerate(indexed_pvals, start=1):
-        p = res["p_value"]
-        q_val = min(1.0, p * m / rank)
-        bh_q_values[orig_idx] = q_val
-        if p <= (rank / m) * alpha:
+    # Compute raw Benjamini-Hochberg adjusted ratios: (m / rank) * p
+    raw_q = [(m / rank) * res["p_value"] for rank, (orig_idx, res) in enumerate(indexed_pvals, start=1)]
+    
+    # Apply standard step-up cumulative minimum backwards to enforce monotonicity: q_(i) = min_{k >= i} (m/k * p_(k))
+    cum_min = 1.0
+    adjusted_q = [1.0] * m
+    for i in range(m - 1, -1, -1):
+        cum_min = min(cum_min, raw_q[i])
+        adjusted_q[i] = min(1.0, cum_min)
+        
+    for i, (orig_idx, res) in enumerate(indexed_pvals, start=1):
+        idx_in_list = i - 1
+        bh_q_values[orig_idx] = adjusted_q[idx_in_list]
+        if res["p_value"] <= (i / m) * alpha:
             bh_significant[orig_idx] = True
             
     for idx, res in enumerate(test_results):

@@ -189,9 +189,9 @@ $$\mathbf{V} = \mathbf{F} \mathbf{A}^T = \big[V_1, V_2, V_3, V_4\big] \in \mathb
 
 ---
 
-### 3. Dual Regional Independence Loss ($\mathcal{L}_{RIL}$)
-Enforces physical 2D non-overlap of attention heads ($\mathcal{L}_{spatial}$) and feature orthogonality ($\mathcal{L}_{feat}$) across distinct facial regions:
-$$\mathcal{L}_{RIL} = \underbrace{\frac{2}{M(M-1)}\sum_{i < j}\sum_{x,y} A_i(x,y) A_j(x,y)}_{\mathcal{L}_{spatial} \text{ (2D Physical Non-Overlap)}} + \gamma \underbrace{\frac{2}{M(M-1)}\sum_{i < j}\max\big(0, V_i^T V_j - m\big)}_{\mathcal{L}_{feat} \text{ (Feature Orthogonality)}}$$
+### 3. Regional Independence Loss ($\mathcal{L}_{RIL}$): Dual Spatial–Feature Regularization
+Encourages spatial separation on the 2D plane ($\mathcal{L}_{spatial}$) and feature diversity in descriptor space ($\mathcal{L}_{feat}$):
+$$\mathcal{L}_{RIL} = \underbrace{\frac{2}{M(M-1)}\sum_{i < j}\sum_{x,y} A_i(x,y) A_j(x,y)}_{\mathcal{L}_{spatial} \text{ (Pairwise Spatial Co-Activation Penalty)}} + \gamma \underbrace{\frac{2}{M(M-1)}\sum_{i < j}\max\big(0, \hat{V}_i^T \hat{V}_j - m\big)}_{\mathcal{L}_{feat} \text{ (Margin-Based Feature Diversity Regularizer, } \hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)})}$$
 
 ---
 

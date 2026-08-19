@@ -1,6 +1,7 @@
 """
 Loss Functions for Spatiotemporal Deepfake Detection.
-Implements Cross-Entropy and the Dual-Regularized Regional Independence Loss (L_RIL).
+Implements Cross-Entropy Classification Loss and Regional Independence Loss (L_RIL)
+with Pairwise Spatial Co-Activation Penalty and Margin-Based Feature Diversity Regularizer.
 """
 
 import torch
@@ -12,10 +13,10 @@ from typing import Dict, Tuple
 class RegionalIndependenceLoss(nn.Module):
     def __init__(self, margin: float = 0.2, gamma_feat: float = 1.0):
         """
-        Dual-Regularized Regional Independence Loss (L_RIL).
+        Regional Independence Loss (L_RIL): Dual Spatial-Feature Regularization.
         Args:
-            margin: Margin m for cosine similarity feature penalty
-            gamma_feat: Weight for feature orthogonality term
+            margin: Margin m for cosine similarity feature diversity penalty (default: 0.2)
+            gamma_feat: Weight gamma for feature diversity term (default: 1.0)
         """
         super().__init__()
         self.margin = margin
@@ -28,12 +29,12 @@ class RegionalIndependenceLoss(nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Args:
-            V_seq: (B, T, M, C) normalized regional feature vectors
+            V_seq: (B, T, M, C) regional feature vectors in R^2304
             A_seq: (B, T, M, H, W) normalized 2D spatial attention maps
         Returns:
             l_ril: Total Regional Independence Loss
-            l_spatial: Spatial attention map non-overlap loss
-            l_feat: Regional feature orthogonality loss
+            l_spatial: Pairwise spatial co-activation penalty
+            l_feat: Margin-based feature diversity regularizer
         """
         B, T, M, C = V_seq.shape
         _, _, _, H, W = A_seq.shape
@@ -56,10 +57,12 @@ class RegionalIndependenceLoss(nn.Module):
         if pair_count > 0:
             l_spatial = l_spatial / pair_count
 
-        # 2. Regional Feature Orthogonality Loss (L_feat)
-        # Cosine similarity between normalized vectors Vi and Vj with margin m
-        # (N, M, C) x (N, C, M) -> (N, M, M) cosine similarity matrix
-        sim_matrix = torch.bmm(V, V.transpose(1, 2))
+        # 2. Regional Feature Diversity Loss (L_feat)
+        # Unit-normalize regional descriptors to compute exact cosine similarity
+        V_norm = F.normalize(V, p=2, dim=-1, eps=1e-8)  # (N, M, C)
+        
+        # (N, M, C) x (N, C, M) -> (N, M, M) exact cosine similarity matrix
+        sim_matrix = torch.bmm(V_norm, V_norm.transpose(1, 2))
         
         l_feat = torch.tensor(0.0, device=V.device)
         for i in range(M):
@@ -70,7 +73,7 @@ class RegionalIndependenceLoss(nn.Module):
         if pair_count > 0:
             l_feat = l_feat / pair_count
             
-        # Composite Regional Independence Loss
+        # Composite Regional Independence Loss (Spatial Non-Overlap + Feature Diversity)
         l_ril = l_spatial + self.gamma_feat * l_feat
         return l_ril, l_spatial, l_feat
 

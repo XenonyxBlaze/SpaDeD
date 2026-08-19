@@ -38,7 +38,7 @@ Specifically, this paper makes three key contributions:
 
 \begin{itemize}
     \item \textbf{Architectural Innovation:} We present a novel unified detection framework combining ResNeXt50 spatial feature extraction, shallow texture enhancement, multi-attentional regional pooling, and LSTM sequence modeling. We demonstrate through rigorous k-fold cross-validation with statistical significance ($\text{Mean} \pm \text{Std Dev}$) that this end-to-end integration outperforms both spatial-only and unconstrained temporal baselines.
-    \item \textbf{Fine-Grained Multi-Region Feature Disambiguation:} We reframe deepfake detection as a multi-region fine-grained classification task. By enforcing a Regional Independence Loss and Attention Guided Data Augmentation (AGDA), we prevent attention collapse and ensure distinct coverage across local facial parts (eyes, nose, mouth, boundary).
+    \item \textbf{Fine-Grained Multi-Region Feature Disambiguation:} We reframe deepfake detection as a multi-region fine-grained classification task. By regularizing attention heads with a dual Regional Independence Loss ($\mathcal{L}_{RIL}$) and Attention Guided Data Augmentation (AGDA), we penalize spatial co-activation and feature redundancy, encouraging complementary coverage across distinct facial regions.
     \item \textbf{Comprehensive DF40 Benchmark \& SOTA Comparisons:} We provide an exhaustive empirical evaluation on the 40-method DF40 dataset across Face Swapping, Face Reenactment, Entire Face Synthesis, and Face Editing, benchmarking against state-of-the-art detectors (CLIP-large, UniFace, SBI, Xception) under strictly controlled training pipelines.
 \end{itemize}
 

@@ -113,7 +113,7 @@ We examine the effect of loss regularization and attention-guided data augmentat
     \par\vspace{4pt}{\scriptsize\textit{Note:} $\mathcal{L}_{RIL}$: Regional Independence Loss; AGDA: Attention Guided Data Augmentation; ACC: Accuracy; AUC: Area Under the ROC Curve; HQ: High Quality; Std Dev: Standard Deviation.}
 \end{table}
 
-Without $\mathcal{L}_{RIL}$, all four attention heads collapse onto the mouth or eye regions. Enforcing the dual spatial non-overlap ($\mathcal{L}_{spatial}$) and feature orthogonality ($\mathcal{L}_{feat}$) constraints forces the attention heads to distribute across mutually distinct facial zones (left eye, right eye, nose/mouth, and blending perimeter). Pairing $\mathcal{L}_{RIL}$ with soft AGDA achieves peak performance ($97.60\%$ ACC and $67.44\%$ AUC).
+Without $\mathcal{L}_{RIL}$, unconstrained attention heads are susceptible to attention collapse onto dominant facial artifacts. Applying the dual Regional Independence Loss—combining the Pairwise Spatial Co-Activation Penalty ($\mathcal{L}_{spatial}$) and the Margin-Based Feature Diversity Regularizer ($\mathcal{L}_{feat}$)—encourages the attention heads to distribute their probability mass across spatially distinct facial regions with diverse semantic descriptors. Pairing $\mathcal{L}_{RIL}$ with soft AGDA achieves peak performance ($97.60\%$ ACC and $67.44\%$ AUC).
 
 \subsection{Evaluation on DF40 Benchmark and SOTA Baseline Comparisons}
 

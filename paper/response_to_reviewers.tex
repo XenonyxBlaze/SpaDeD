@@ -1,0 +1,266 @@
+\documentclass[runningheads]{llncs}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tcolorbox}
+
+\begin{document}
+
+\title{Point-by-Point Author Response to Reviewer Comments}
+\subtitle{Manuscript ID: 1637 --- Spatiotemporal Deepfake Detection via Texture-Enhanced Multi-Attentional ResNeXt50-BiLSTM Architecture}
+\author{Aarav Rajput \and Trapti Sharma \and Rajit Nair \and Hasan Alkahtani \and Adel Musaad Alrasheedi \and Sami Morsi \and Ahmed A.F. Osman \and Theyazn H.H. Aldhyani}
+\institute{}
+\maketitle
+
+We express our sincere gratitude to the Editor and the Reviewers for their constructive, insightful, and comprehensive feedback regarding Manuscript ID: 1637. Below, we provide our detailed point-by-point responses and document all corresponding manuscript revisions.
+
+\section*{Major Concern 1: Regional Independence Loss ($\mathcal{L}_{RIL}$) Formulation}
+
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50,title=\textbf{Reviewer Comment 1}]
+\textit{``The formulation of the Regional Independence Loss ($\mathcal{L}_{RIL}$) is questionable. The manuscript claims that $\mathcal{L}_{RIL}$ penalizes overlapping attention maps, but the proposed loss is actually computed from the cosine similarity between regional feature vectors ($V_i$) and ($V_j$). This does not directly measure spatial overlap between attention maps. Therefore, the claim that the loss `forces each attention head to cover a distinct facial region' is not sufficiently supported by the presented formulation.''}
+\end{tcolorbox}
+
+\noindent\textbf{Author Response:} We thank the Reviewer for identifying this crucial theoretical discrepancy. The Reviewer is completely correct: cosine similarity between regional feature vectors operates in the latent descriptor space rather than measuring 2D spatial overlap across the feature grid.
+
+To resolve this issue with complete mathematical rigor, we have reformulated $\mathcal{L}_{RIL}$ in \textbf{Section 3.4.1 (Equations 8--11)} as a \textbf{dual-regularized loss function} that explicitly decouples 2D spatial co-activation from regional feature diversity:
+\begin{equation}
+    \mathcal{L}_{RIL} = \mathcal{L}_{spatial} + \gamma \cdot \mathcal{L}_{feat}, \quad (\gamma = 1.0)
+\end{equation}
+
+\begin{enumerate}
+    \item \textbf{Pairwise Spatial Co-Activation Penalty ($\mathcal{L}_{spatial}$):} Each 2D spatial attention map $A_k \in \mathbb{R}^{H \times W}$ is normalized over the spatial grid via spatial softmax:
+    \begin{equation}
+        \sum_{x=1}^{H} \sum_{y=1}^{W} A_k(x,y) = 1, \quad \forall k \in \{1, \dots, M\}.
+    \end{equation}
+    The spatial penalty computes the inner product between pairs of spatial probability distributions, averaged across all $\binom{M}{2}$ unique head pairs:
+    \begin{equation}
+        \mathcal{L}_{spatial} = \frac{2}{M(M-1)} \sum_{i=1}^{M-1} \sum_{j=i+1}^{M} \sum_{x=1}^{H} \sum_{y=1}^{W} A_i(x,y) \cdot A_j(x,y).
+    \end{equation}
+    Because $A_i$ and $A_j$ are non-negative normalized distributions, $\sum_{x,y} A_i(x,y) A_j(x,y)$ is the dot product between the two flattened 2D spatial probability distributions. Minimizing $\mathcal{L}_{spatial}$ penalizes simultaneous activation at identical spatial coordinates, \textbf{encouraging the $M=4$ attention heads to place their probability mass on spatially distinct facial regions}.
+
+    \item \textbf{Margin-Based Feature Diversity Regularizer ($\mathcal{L}_{feat}$):} To reduce representation redundancy in descriptor space, we define the unit-normalized regional feature vector:
+    \begin{equation}
+        \hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}, \quad k \in \{1, \dots, M\},
+    \end{equation}
+    where $\epsilon = 10^{-8}$ ensures numerical stability. For descriptors with $\|V_k\|_2 \ge \epsilon$, $\hat{V}_k$ is the unit-normalized descriptor and the inner product $\hat{V}_i^T \hat{V}_j$ equals their exact cosine similarity $\cos(V_i, V_j) \in [-1, 1]$ between regional descriptors. The feature diversity regularizer applies a margin-based hinge penalty:
+    \begin{equation}
+        \mathcal{L}_{feat} = \frac{2}{M(M-1)} \sum_{i=1}^{M-1} \sum_{j=i+1}^{M} \max\big(0,\, \hat{V}_i^T \hat{V}_j - m\big),
+    \end{equation}
+    where $m = 0.2$ is the margin hyperparameter.
+\end{enumerate}
+
+\paragraph{Clarifications on Mechanism and Specialization}
+\begin{itemize}
+    \item \textbf{Feature Diversity vs. Strict Orthogonality:} $\mathcal{L}_{feat}$ enforces \textit{feature diversity} rather than rigid algebraic orthogonality $(\hat{V}_i^T \hat{V}_j)^2$. The hinge formulation permits natural semantic correlations below margin $m=0.2$ while penalizing collinear feature collapse.
+    \item \textbf{Emergent Specialization:} The spatial loss encourages spatial separation, while the specific regional specialization of each head is an emergent property learned from task gradients, architectural inductive biases, and input data distribution.
+    \item \textbf{Dual Complementarity:} $\mathcal{L}_{spatial}$ reduces \textbf{spatial co-activation} on the 2D grid (\textit{where heads attend}), while $\mathcal{L}_{feat}$ reduces \textbf{excessive feature-level similarity} in the 2304-dimensional regional feature space (\textit{what heads represent}). Together, the proposed RIL encourages regional independence through complementary regularization of spatial co-activation and feature-level similarity among attention heads.
+\end{itemize}
+
+\paragraph{Manuscript Changes:} Section 3.4.1 (Equations 8--11) and the ablation analysis in Section 4.3 (Table 6) have been thoroughly updated.
+
+\bigskip
+
+\section*{Major Concern 2: Definition of Bilinear Attention Pooling (BAP)}
+
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50,title=\textbf{Reviewer Comment 2}]
+\textit{``The definition of Bilinear Attention Pooling (BAP) is ambiguous. The manuscript uses the term `outer product', but does not provide a formal matrix formulation. Furthermore, it is unclear whether feature concatenation ($F_{tex}$ and $F_{sem}$) occurs before or after attention weighting.''}
+\end{tcolorbox}
+
+\noindent\textbf{Author Response:} We appreciate the Reviewer's request for formal clarity. We have revised \textbf{Section 3.3.3 (Equations 3--6)} to provide the explicit matrix algebraic definition of Bilinear Attention Pooling and clarify the precise order of tensor operations.
+
+\begin{enumerate}
+    \item \textbf{Channel-Wise Concatenation (Prior to Attention):}  
+    Let $F_{sem} \in \mathbb{R}^{2048 \times H \times W}$ denote the deep semantic feature map from ResNeXt50 Stage 4 and $F_{tex} \in \mathbb{R}^{256 \times H \times W}$ denote the shallow texture feature map from the TEB ($H=8, W=8$). Channel-wise concatenation occurs \textbf{first} to form the unified spatial representation tensor:
+    \begin{equation}
+        F = [F_{sem} \,\|\, F_{tex}] \in \mathbb{R}^{C \times H \times W}, \quad \text{where } C = 2048 + 256 = 2304.
+    \end{equation}
+
+    \item \textbf{Formal Matrix Bilinear Attention Pooling:}  
+    Let $\mathbf{F} \in \mathbb{R}^{C \times K}$ denote the unrolled spatial feature matrix ($K = H \times W = 64$) and let $\mathbf{A} = [A_1; A_2; \dots; A_M] \in \mathbb{R}^{M \times K}$ denote the stacked attention weight matrix ($M=4$). Bilinear Attention Pooling is formally computed via matrix multiplication:
+    \begin{equation}
+        \mathbf{V} = \mathbf{F} \, \mathbf{A}^T = \big[V_1, V_2, \dots, V_M\big] \in \mathbb{R}^{C \times M} = \mathbb{R}^{2304 \times 4},
+    \end{equation}
+    where each column descriptor $V_k \in \mathbb{R}^{2304}$ corresponds to:
+    \begin{equation}
+        V_k = \sum_{x=1}^{H} \sum_{y=1}^{W} A_k(x,y) \cdot F(x,y).
+    \end{equation}
+    Each regional vector is unit-normalized: $\hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}$, yielding a parts-based descriptor where each head isolates forensic evidence from distinct spatial regions.
+\end{enumerate}
+
+\paragraph{Manuscript Changes:} Section 3.3.3 (Equations 3--6) and Figure 1 have been revised with the complete matrix formulation and dimensionality flow.
+
+\bigskip
+
+\section*{Major Concern 3: CNN-LSTM Feature Pipeline \& Dimensionalities}
+
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50,title=\textbf{Reviewer Comment 3}]
+\textit{``The transition between spatial multi-head features and the LSTM temporal model lacks mathematical precision. How are the $M$ regional feature vectors aggregated into the frame-level feature vector $x_t$? What are the exact dimensions at each stage?''}
+\end{tcolorbox}
+
+\noindent\textbf{Author Response:} We have expanded \textbf{Section 3.3.4 (Equations 7--9)} and added \textbf{Table 1 (Tensor Dimension Trace Table)} to define every dimensional transition across the entire network:
+
+\begin{enumerate}
+    \item \textbf{Aggregation and Linear Bottleneck Projection ($W_{proj}$):}  
+    For frame $t \in \{1, \dots, T\}$, the $M=4$ normalized regional vectors $\{\hat{V}_1^{(t)}, \dots, \hat{V}_M^{(t)}\} \subset \mathbb{R}^{2304}$ are concatenated into a single frame descriptor $V_{concat}^{(t)} \in \mathbb{R}^{9216}$ ($4 \times 2304 = 9216$). To prevent parameter explosion in the recurrent cell, $V_{concat}^{(t)}$ is projected to $d_{in}=512$ via a learned linear projection $W_{proj} \in \mathbb{R}^{512 \times 9216}$ with Layer Normalization and GELU activation:
+    \begin{equation}
+        x_t = \text{GELU}\Big(\text{LayerNorm}(W_{proj} V_{concat}^{(t)} + b_{proj})\Big) \in \mathbb{R}^{512}.
+    \end{equation}
+
+    \item \textbf{Recurrent Sequence Modeling \& MLP Classifier:}  
+    The sequence $\{x_1, \dots, x_T\} \in \mathbb{R}^{T \times 512}$ ($T=20$) is processed by a 2-layer Bidirectional LSTM with hidden dimension $d_h = 256$ per direction ($h_t \in \mathbb{R}^{512}$). Temporal average pooling yields $h_{seq} = \frac{1}{T}\sum_{t=1}^T h_t \in \mathbb{R}^{512}$, which is classified by an MLP ($512 \to 128 \to 2$) into binary logits $\hat{y} \in \mathbb{R}^2$.
+\end{enumerate}
+
+\begin{table}[ht]
+\centering
+\caption{Full Tensor Dimension Trace across the Proposed Architecture}
+\label{tab:rebuttal_dimensions}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l|c|c|l}
+\toprule
+\textbf{Pipeline Stage} & \textbf{Input Shape} & \textbf{Output Shape} & \textbf{Details / Layer Specification} \\
+\midrule
+Input Video Segment & $(B, T, 3, 256, 256)$ & $(B \cdot T, 3, 256, 256)$ & $B=16, T=20$ frames \\
+ResNeXt50 Stage 4 & $(B \cdot T, 3, 256, 256)$ & $(B \cdot T, 2048, 8, 8)$ & Semantic map $F_{sem}$ \\
+TEB Texture Block & $(B \cdot T, 64, 64, 64)$ & $(B \cdot T, 256, 8, 8)$ & Texture map $F_{tex}$ \\
+Feature Fusion & $F_{sem}, F_{tex}$ & $(B \cdot T, 2304, 8, 8)$ & Fused map $F$ ($C=2304$) \\
+Multi-Head Attention & $(B \cdot T, 2304, 8, 8)$ & $(B \cdot T, 4, 8, 8)$ & $M=4$ attention maps $A_k$ \\
+BAP Pooling & $F$ and $A$ & $(B \cdot T, 4, 2304)$ & $M=4$ regional vectors $\hat{V}_k$ \\
+Bottleneck Projection & $(B \cdot T, 9216)$ & $(B \cdot T, 512)$ & Linear $W_{proj} \in \mathbb{R}^{512 \times 9216}$ \\
+Temporal Unfold & $(B \cdot T, 512)$ & $(B, 20, 512)$ & Temporal sequence $x_t$ \\
+2-Layer BiLSTM & $(B, 20, 512)$ & $(B, 20, 512)$ & Hidden $d_h = 256 \times 2 = 512$ \\
+Temporal Mean Pool & $(B, 20, 512)$ & $(B, 512)$ & Global descriptor $h_{seq}$ \\
+MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\paragraph{Manuscript Changes:} Section 3.3.4, Equations 7--9, and Table 1 provide the full mathematical and tensor derivation.
+
+\bigskip
+
+\section*{Major Concern 4: DF40 Evaluation Protocol \& Cross-Category Generalization}
+
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50,title=\textbf{Reviewer Comment 4}]
+\textit{``The evaluation on the DF40 benchmark lacks clear experimental distinction between cross-category testing (evaluating on unseen manipulation types) and standard within-domain cross-validation. How is 5-fold CV applied to unseen generator benchmarks?''}
+\end{tcolorbox}
+
+\noindent\textbf{Author Response:} We thank the Reviewer for pointing out the need for an unambiguous description of the cross-category protocol. We have added \textbf{Section 3.2.3 and Section 4.4} to formally document the protocol:
+
+\begin{itemize}
+    \item \textbf{Training Stage:} 5-fold cross-validation is performed \textit{within} a single manipulation family (e.g., Train on Face Swapping [FS], encompassing 10 generator methods). The source identities are partitioned into 5 subject-disjoint folds, yielding 5 distinct trained model checkpoints.
+    \item \textbf{Unseen Generalization Testing:} Each of the 5 trained model checkpoints is independently evaluated on the remaining manipulation categories (Test on Face Reenactment [FR], Entire Face Synthesis [EFS], and Face Editing [FE]).
+    \item \textbf{Strict Unseen Definition:} An ``unseen category'' represents a manipulation paradigm from which \textbf{zero training images, zero video clips, and zero checkpoint weights} were accessible during training.
+    \item \textbf{Reported Metrics:} In Table 4 (Section 4.4.1), each cell reports the $\text{Mean} \pm \text{Standard Deviation}$ across all 5 evaluation checkpoints.
+\end{itemize}
+
+\paragraph{Manuscript Changes:} Section 3.2.3 and Section 4.4.1 (Table 4) now explicitly define this protocol.
+
+\bigskip
+
+\section*{Major Concern 5: Sequence Modeling on Static Image Categories (EFS and FE)}
+
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50,title=\textbf{Reviewer Comment 5}]
+\textit{``The manuscript applies an LSTM temporal model to Entire Face Synthesis (EFS) and Face Editing (FE) categories, which consist of static images rather than video sequences. The justification for using temporal modeling on static data is unconvincing.''}
+\end{tcolorbox}
+
+\noindent\textbf{Author Response:} We appreciate the Reviewer's insightful observation. We have added \textbf{Section 3.2.4 and Section 4.4.2} to provide both theoretical and empirical justifications:
+
+\begin{enumerate}
+    \item \textbf{Mathematical Frame Replication \& Invariant Fixed-Point Convergence:}  
+    To maintain a unified network topology for both video and static image inputs without heuristic architecture switching, each static image $I$ is expanded into a length-$T=20$ sequence via frame replication: $I_1 = I_2 = \dots = I_T = I$. Because the extracted spatial features are time-invariant ($x_t = x$), the BiLSTM recurrent state rapidly reaches a stable fixed-point representation:
+    \begin{equation}
+        h_T = \text{BiLSTM}\big(x, h_{T-1}\big) \approx \phi(x).
+    \end{equation}
+
+    \item \textbf{Modality-Specific Empirical Dissection (Section 4.4.2):}  
+    We explicitly dissect the source of performance across modalities:
+    \begin{itemize}
+        \item \textbf{Static Image Categories (EFS, FE):} The high performance ($83.2\%$ AUC on EFS) is driven primarily by \textbf{Phase 2 (TEB + Multi-Attentional BAP with $\mathcal{L}_{RIL}$)}, which detects microscopic high-frequency generative upsampling noise and localized facial inconsistencies.
+        \item \textbf{Video Categories (FS, FR):} The \textbf{BiLSTM sequence module} delivers an essential complementary boost ($+2.58\%$ AUC on Celeb-DF, Table 2) by capturing inter-frame jitter, boundary flickering, and irregular blinking dynamics.
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Manuscript Changes:} Section 3.2.4 and Section 4.4.2 explicitly document this modality separation and fixed-point analysis.
+
+\bigskip
+
+\section*{Major Concern 6: Data Leakage Prevention \& Partitioning Level}
+
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50,title=\textbf{Reviewer Comment 6}]
+\textit{``The manuscript does not clarify whether the 5-fold cross-validation is subject-disjoint or video-disjoint. Splitting at the frame or clip level causes severe data leakage.''}
+\end{tcolorbox}
+
+\noindent\textbf{Author Response:} We completely agree with the Reviewer that frame-level splitting introduces artificial inflation. We have added \textbf{Section 3.2.2} to explicitly guarantee that our evaluation is strictly \textbf{leakage-free}:
+
+\begin{itemize}
+    \item \textbf{Subject-Disjoint Partitioning ($0\%$ Overlap):} In FaceForensics++ (1,000 source videos), DF40, and Celeb-DF (590 celebrity identities), partitioning is executed strictly at the \textbf{source video and subject identity level} prior to frame extraction. All manipulated variations derived from subject identity $k$ are assigned exclusively to Fold $k$. Zero frames or videos of any subject in the test set ever appear in the training set.
+    \item \textbf{Sequence Encapsulation:} Temporal clips of length $T=20$ frames are extracted strictly within individual video boundaries post-partitioning. Sliding windows never cross video boundaries.
+\end{itemize}
+
+\paragraph{Manuscript Changes:} Section 3.2.2 and Section 4.1 explicitly document the strict subject-disjoint partitioning protocol.
+
+\bigskip
+
+\section*{Major Concern 7: Statistical Analysis \& Multiple Comparisons Corrections}
+
+\begin{tcolorbox}[colback=gray!10,colframe=gray!50,title=\textbf{Reviewer Comment 7}]
+\textit{``The statistical comparison lacks paired tests across cross-validation folds and does not account for the multiple testing problem when evaluating across multiple forgery categories.''}
+\end{tcolorbox}
+
+\noindent\textbf{Author Response:} We thank the Reviewer for emphasizing statistical rigor. We have added \textbf{Section 4.4.3 and Table 5}, conducting two-tailed paired $t$-tests across the 5 cross-validation folds ($df = 4$) with family-wise error rate (FWER) and false discovery rate (FDR) corrections:
+
+\begin{enumerate}
+    \item \textbf{Multiple Comparisons Adjustments across $K=8$ Evaluation Conditions:}
+    \begin{itemize}
+        \item \textbf{Bonferroni Correction:} Sets the conservative adjusted threshold to $\alpha_{adj} = \frac{0.05}{8} = 0.00625$.
+        \item \textbf{Benjamini-Hochberg (BH) FDR:} Controls false discovery rate at $q < 0.05$.
+    \end{itemize}
+
+    \item \textbf{Statistical Significance Table (Table 5):}
+\end{enumerate}
+
+\begin{table}[ht]
+\centering
+\caption{Statistical Significance across Cross-Forgery Evaluation Conditions ($df=4$)}
+\label{tab:rebuttal_stats}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{l|c|c|c|c|c}
+\toprule
+\textbf{Evaluation Condition} & \textbf{Mean Diff ($\Delta$)} & \textbf{$t$-statistic} & \textbf{Raw $p$-value} & \textbf{Bonferroni $p_{adj}$} & \textbf{BH FDR ($q<0.05$)} \\
+\midrule
+\textbf{Train FS $\to$ Test FS} & $+1.1\%$ & $4.568$ & $0.0103$ & $0.0824$ & Significant ($q = 0.0103$) \\
+\textbf{Train FS $\to$ Test FR} & $+4.2\%$ & $11.611$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FS $\to$ Test EFS} & $+3.4\%$ & $7.694$ & $0.0015$ & $0.0120$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FS $\to$ Test FE} & $+2.7\%$ & $8.409$ & $0.0011$ & $0.0088$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FR $\to$ Test FS} & $+7.7\%$ & $17.424$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FR $\to$ Test FR} & $+2.1\%$ & $7.457$ & $0.0017$ & $0.0136$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FR $\to$ Test EFS} & $+2.3\%$ & $6.358$ & $0.0031$ & $0.0248$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FR $\to$ Test FE} & $+5.1\%$ & $14.099$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+\begin{enumerate}
+    \setcounter{enumi}{2}
+    \item \textbf{Statistical Assumption Verification:}
+    \begin{itemize}
+        \item \textbf{Normality:} Shapiro-Wilk tests yielded $W \in [0.892, 0.967]$ with all $p > 0.30$, verifying normality.
+        \item \textbf{Non-Parametric Confirmation:} Wilcoxon signed-rank tests yielded $W=0, p=0.03125$.
+        \item \textbf{Conclusion:} All 8 cross-forgery conditions reject the null hypothesis under Benjamini-Hochberg FDR control ($q < 0.05$), and 6 of 8 remain significant under the strict Bonferroni threshold ($\alpha_{adj} = 0.00625$).
+    \end{itemize}
+\end{enumerate}
+
+\paragraph{Manuscript Changes:} Section 4.4.3 and Table 5 document the full statistical analysis.
+
+\bigskip
+
+\section*{Conclusion}
+
+We thank the Reviewers and the Editor once again for their constructive and invaluable critique. The revisions have significantly strengthened the theoretical foundations, empirical clarity, and statistical rigor of our manuscript. We hope the revised paper is now suitable for publication.
+
+\end{document}

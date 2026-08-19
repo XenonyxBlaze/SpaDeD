@@ -85,7 +85,7 @@ def run_architectural_verification():
     print(f"    - Cross-Entropy: {metrics['loss_ce']:.4f}")
     print(f"    - LRIL Loss:     {metrics['loss_ril']:.4f}")
     print(f"    - Spatial Map:   {metrics['loss_spatial']:.4f}")
-    print(f"    - Feature Ortho: {metrics['loss_feat']:.4f}")
+    print(f"    - Feature Div:   {metrics['loss_feat']:.4f}")
     
     print("\n[+] Executing Backward Pass (Gradient Flow Check)...")
     loss.backward()

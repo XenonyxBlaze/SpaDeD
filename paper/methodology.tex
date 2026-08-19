@@ -207,14 +207,14 @@ where each regional feature vector $V_k \in \mathbb{R}^C$ corresponds to:
 \begin{equation}
     V_k = \sum_{x=1}^{H} \sum_{y=1}^{W} A_k(x,y) \cdot F(x,y).
 \end{equation}
-Each regional vector is $L_2$-normalized: $V_k \leftarrow \frac{V_k}{\|V_k\|_2 + \epsilon}$, yielding a parts-based descriptor where each head isolates forensic evidence from specific facial regions \citep{Zhao2021MultiAttentional}.
+Each regional vector is unit-normalized: $\hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}$, yielding a parts-based descriptor where each head isolates forensic evidence from specific spatial regions \citep{Zhao2021MultiAttentional}.
 
 \subsubsection{CNN–LSTM Feature Pipeline and Dimensionality Specification}
 For each frame $t \in \{1, \dots, T\}$ in a $T=20$ frame sequence:
 \begin{enumerate}
-    \item \textbf{Multi-Head Feature Concatenation:} The $M=4$ normalized regional vectors $\{V_1^{(t)}, \dots, V_M^{(t)}\}$ are concatenated:
+    \item \textbf{Multi-Head Feature Concatenation:} The $M=4$ normalized regional vectors $\{\hat{V}_1^{(t)}, \dots, \hat{V}_M^{(t)}\}$ are concatenated:
     \begin{equation}
-        V_{concat}^{(t)} = \big[V_1^{(t)} \,\|\, V_2^{(t)} \,\|\, V_3^{(t)} \,\|\, V_4^{(t)}\big] \in \mathbb{R}^{M \cdot C} = \mathbb{R}^{9216}.
+        V_{concat}^{(t)} = \big[\hat{V}_1^{(t)} \,\|\, \hat{V}_2^{(t)} \,\|\, \hat{V}_3^{(t)} \,\|\, \hat{V}_4^{(t)}\big] \in \mathbb{R}^{M \cdot C} = \mathbb{R}^{9216}.
     \end{equation}
     \item \textbf{Linear Bottleneck Projection:} To prevent parameter bloat in the recurrent module, $V_{concat}^{(t)}$ is projected to a $d_{in}=512$ dimensional frame feature vector $x_t$ via a learned linear projection $W_{proj} \in \mathbb{R}^{512 \times 9216}$ with Layer Normalization and GELU activation:
     \begin{equation}
@@ -241,7 +241,7 @@ For each frame $t \in \{1, \dots, T\}$ in a $T=20$ frame sequence:
         TEB Texture Block & $(B \cdot T, 64, 64, 64)$ & $(B \cdot T, 256, 8, 8)$ & Texture map $F_{tex}$ \\
         Feature Fusion & $F_{sem}, F_{tex}$ & $(B \cdot T, 2304, 8, 8)$ & Fused map $F$ ($C=2304$) \\
         Multi-Head Attention & $(B \cdot T, 2304, 8, 8)$ & $(B \cdot T, 4, 8, 8)$ & $M=4$ attention maps $A_k$ \\
-        BAP Pooling & $F$ and $A$ & $(B \cdot T, 4, 2304)$ & $M=4$ vectors $V_k \in \mathbb{R}^{2304}$ \\
+        BAP Pooling & $F$ and $A$ & $(B \cdot T, 4, 2304)$ & $M=4$ regional vectors $\hat{V}_k \in \mathbb{R}^{2304}$ \\
         Bottleneck Projection & $(B \cdot T, 9216)$ & $(B \cdot T, 512)$ & Linear $W_{proj} \in \mathbb{R}^{512 \times 9216}$ \\
         Temporal Unfold & $(B \cdot T, 512)$ & $(B, 20, 512)$ & Temporal sequence $x_t$ \\
         2-Layer BiLSTM & $(B, 20, 512)$ & $(B, 20, 512)$ & Hidden $d_h = 256 \times 2 = 512$ \\
@@ -255,34 +255,37 @@ For each frame $t \in \{1, \dots, T\}$ in a $T=20$ frame sequence:
 
 \subsection{Training Strategy and Loss Formulations}
 
-\subsubsection{Loss Functions}
-Unconstrained multi-head attention is susceptible to attention collapse, where all heads co-activate on the single most salient visual artifact (such as mouth or eye regions). To enforce spatial diversity and representation orthogonality, the network is trained with a composite objective combining Cross-Entropy Classification Loss ($\mathcal{L}_{CE}$) with a dual-regularized Regional Independence Loss ($\mathcal{L}_{RIL}$).
-
-\paragraph{Regional Independence Loss (\texorpdfstring{$\mathcal{L}_{RIL}$}{L\_RIL})}
-The Regional Independence Loss is formulated with two complementary objectives:
+\paragraph{Regional Independence Loss (\texorpdfstring{$\mathcal{L}_{RIL}$}{L\_RIL}): Dual Spatial--Feature Regularization}
+Unconstrained multi-head attention is susceptible to attention collapse, where multiple heads co-activate on the single most salient visual artifact. To encourage spatial separation and prevent redundant feature representations, the network is regularized with a composite Regional Independence Loss ($\mathcal{L}_{RIL}$) operating simultaneously in the 2D spatial domain and the regional feature space:
 \begin{equation}
     \mathcal{L}_{RIL} = \mathcal{L}_{spatial} + \gamma \, \mathcal{L}_{feat},
 \end{equation}
-where $\gamma = 1.0$ balances spatial separation and feature decorrelation.
+where $\gamma = 1.0$ balances spatial separation and feature-level diversity.
 
-1. \textbf{Spatial Attention Map Non-Overlap Loss ($\mathcal{L}_{spatial}$):} Directly penalizes spatial co-activation between 2D attention maps $A_i$ and $A_j$ across spatial coordinates $(x,y)$, normalized over all $\binom{M}{2}$ head pairs:
+1. \textbf{Pairwise Spatial Co-Activation Penalty ($\mathcal{L}_{spatial}$):} Directly penalizes spatial co-activation between 2D attention maps $A_i$ and $A_j$ across the $(H, W)$ spatial grid, averaged over all $\binom{M}{2}$ unique head pairs:
 \begin{equation}
     \mathcal{L}_{spatial} = \frac{2}{M(M-1)} \sum_{i=1}^{M-1} \sum_{j=i+1}^{M} \sum_{x=1}^{H} \sum_{y=1}^{W} A_i(x,y) \cdot A_j(x,y).
 \end{equation}
-Because spatial attention weights sum to 1 ($\sum_{x,y} A_k(x,y) = 1$), minimizing $\mathcal{L}_{spatial}$ drives the overlap integral toward zero, explicitly forcing each attention head to cover physically disjoint facial zones (e.g., eyes, nose, mouth, blending contour).
+Because spatial attention weights are normalized via spatial softmax ($\sum_{x,y} A_k(x,y) = 1$ for each head $k$), the inner product $\sum_{x,y} A_i(x,y) A_j(x,y)$ is the dot product between the two flattened 2D spatial probability distributions. Minimizing $\mathcal{L}_{spatial}$ penalizes simultaneous activation at identical spatial coordinates, encouraging the $M=4$ attention heads to place their probability mass on spatially distinct facial regions.
 
-2. \textbf{Regional Feature Orthogonality Loss ($\mathcal{L}_{feat}$):} Since the regional vectors $V_k$ are $L_2$-normalized, their cosine similarity reduces to inner product $V_i^T V_j$. The feature orthogonality loss penalizes redundant semantic representations:
+2. \textbf{Margin-Based Feature Diversity Regularizer ($\mathcal{L}_{feat}$):} To ensure that pooled descriptors capture diverse cues rather than redundant representations, we define the unit-normalized regional descriptor:
 \begin{equation}
-    \mathcal{L}_{feat} = \frac{2}{M(M-1)} \sum_{i=1}^{M-1} \sum_{j=i+1}^{M} \max\big(0,\, V_i^T V_j - m\big),
+    \hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}, \quad k \in \{1, \dots, M\},
 \end{equation}
-where $m = 0.2$ is a margin hyperparameter.
+where $\epsilon = 10^{-8}$ ensures numerical stability. For descriptors with $\|V_k\|_2 \ge \epsilon$, $\hat{V}_k$ is the unit-normalized descriptor and $\hat{V}_i^T \hat{V}_j$ equals their exact cosine similarity $\cos(V_i, V_j) \in [-1, 1]$. The feature diversity regularizer applies a margin-based hinge penalty to discourage excessive cosine similarity between pairs of regional descriptors above a threshold margin $m$:
+\begin{equation}
+    \mathcal{L}_{feat} = \frac{2}{M(M-1)} \sum_{i=1}^{M-1} \sum_{j=i+1}^{M} \max\big(0,\, \hat{V}_i^T \hat{V}_j - m\big),
+\end{equation}
+where $m = 0.2$ is the margin hyperparameter. Unlike a strict quadratic penalty $(\hat{V}_i^T \hat{V}_j)^2$, the hinge formulation permits natural semantic correlations below margin $m$ while penalizing collinear feature collapse.
+
+Thus, the proposed $\mathcal{L}_{RIL}$ encourages regional independence through complementary regularization of spatial co-activation on the 2D plane ($\mathcal{L}_{spatial}$, \textit{where heads attend}) and feature-level similarity in the 2304-dimensional regional feature space ($\mathcal{L}_{feat}$, \textit{what heads represent}).
 
 \paragraph{Total Composite Objective}
 The complete end-to-end training loss is:
 \begin{equation}
     \mathcal{L}_{Total} = \mathcal{L}_{CE} + \lambda \cdot \mathcal{L}_{RIL},
 \end{equation}
-where $\mathcal{L}_{CE}$ is standard cross-entropy loss and $\lambda = 0.5$ is the weighting coefficient determined via sensitivity sweep (Section \ref{sec:sensitivity}).
+where $\mathcal{L}_{CE}$ is standard cross-entropy classification loss and $\lambda = 0.5$ is the weighting coefficient determined via hyperparameter sensitivity analysis (Section \ref{sec:sensitivity}).
 
 \subsubsection{Attention Guided Data Augmentation (AGDA)}
 To further enhance robustness against spatial over-specialization, Attention Guided Data Augmentation (AGDA) dynamically erases or blurs the most active attention region during training. By masking dominant facial zones with probability $p=0.5$, the network is forced to discover secondary, subtle forensic cues across alternative regions \citep{Zhao2021MultiAttentional}.

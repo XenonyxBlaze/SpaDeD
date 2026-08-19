@@ -68,13 +68,13 @@ We appreciate the Reviewer's request for formal clarity. We have revised **Secti
    $$F = [F_{sem} \,\|\, F_{tex}] \in \mathbb{R}^{C \times H \times W}, \quad \text{where } C = 2048 + 256 = 2304$$
 
 2. **Formal Matrix Bilinear Attention Pooling:**  
-   Let $\mathbf{F} \in \mathbb{R}^{C \times K}$ denote the unrolled spatial feature matrix ($K = H \times W = 64$) and let $\mathbf{A} = [A_1; A_2; \dots; A_M] \in \mathbb{R}^{M \times K}$ denote the stacked attention weight matrix ($M=4$). Bilinear Attention Pooling is formally computed via matrix multiplication:
+   Let $\mathbf{F} \in \mathbb{R}^{C \times K}$ denote the unrolled spatial feature matrix ($K = H \times W = 64$) and let $\mathbf{A} = [A_1; A_2; \dots; A_M] \in \mathbb{R}^{M \times K}$ denote the stacked attention weight matrix ($M=4$). Following the terminology established by \citet{Zhao2021MultiAttentional}, Bilinear Attention Pooling computes the bilinear matrix interaction between the feature tensor $\mathbf{F}$ and the multi-head spatial attention distribution $\mathbf{A}$:
    $$\mathbf{V} = \mathbf{F} \, \mathbf{A}^T = \big[V_1, V_2, \dots, V_M\big] \in \mathbb{R}^{C \times M} = \mathbb{R}^{2304 \times 4}$$
    where each column descriptor $V_k \in \mathbb{R}^{2304}$ corresponds to:
    $$V_k = \sum_{x=1}^{H} \sum_{y=1}^{W} A_k(x,y) \cdot F(x,y)$$
-   Each regional vector is unit-normalized: $\hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}$, yielding a parts-based descriptor where each head isolates forensic evidence from distinct spatial regions.
+   Each regional vector is unit-normalized: $\hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}$, yielding a parts-based descriptor where each head isolates forensic evidence from distinct spatial regions. We have explicitly distinguished this attention-weighted regional pooling from classical quadratic self-outer-product bilinear feature models \citep{Lin2015Bilinear}.
 
-* **Manuscript Changes:** Section 3.3.3 (Equations 2–5) and Figure 1 have been revised with the complete matrix formulation and dimensionality flow.
+* **Manuscript Changes:** Section 3.3.3 (Equations 2–5) and Figure 1 have been revised with the complete matrix formulation, terminology clarification, and dimensionality flow.
 
 ---
 
@@ -135,8 +135,8 @@ We thank the Reviewer for pointing out the need for an unambiguous description o
 **Author Response:**  
 We appreciate the Reviewer's insightful observation. We have added **Section 3.2.4 and Section 4.4.2** to provide both theoretical and empirical justifications:
 
-1. **Mathematical Frame Replication & Invariant Fixed-Point Convergence:**  
-   To maintain a unified network topology for both video and static image inputs without heuristic architecture switching, each static image $I$ is expanded into a length-$T=20$ sequence via frame replication: $I_1 = I_2 = \dots = I_T = I$. Because the extracted spatial features are time-invariant ($x_t = x$), the BiLSTM recurrent state rapidly reaches a stable fixed-point representation:
+1. **Practical Frame Replication & Steady-State Projection:**  
+   To maintain a unified network topology for both video and static image inputs without heuristic architecture branching or switching, each static image $I$ is expanded into a length-$T=20$ sequence via frame replication: $I_1 = I_2 = \dots = I_T = I$. Because the extracted spatial features are time-invariant ($x_t = x$), the recurrent sequence represents a steady-state temporal projection:
    $$h_T = \text{BiLSTM}\big(x, h_{T-1}\big) \approx \phi(x)$$
 
 2. **Modality-Specific Empirical Dissection (Section 4.4.2):**  
@@ -144,7 +144,7 @@ We appreciate the Reviewer's insightful observation. We have added **Section 3.2
    * **Static Image Categories (EFS, FE):** The high performance ($83.2\%$ AUC on EFS) is driven primarily by **Phase 2 (TEB + Multi-Attentional BAP with $\mathcal{L}_{RIL}$)**, which detects microscopic high-frequency generative upsampling noise and localized facial inconsistencies.
    * **Video Categories (FS, FR):** The **BiLSTM sequence module** delivers an essential complementary boost ($+2.58\%$ AUC on Celeb-DF, Table 6) by capturing inter-frame jitter, boundary flickering, and irregular blinking dynamics.
 
-* **Manuscript Changes:** Section 3.2.4 and Section 4.4.2 explicitly document this modality separation and fixed-point analysis.
+* **Manuscript Changes:** Section 3.2.4 and Section 4.4.2 explicitly document this modality separation and steady-state analysis.
 
 ---
 
@@ -177,19 +177,19 @@ We thank the Reviewer for emphasizing statistical rigor. We have added **Section
 
 | Evaluation Condition | Mean Diff ($\Delta$) | $t$-statistic | Raw $p$-value | Bonferroni $p_{adj}$ | BH FDR ($q<0.05$) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Train FS $\to$ Test FS** | $+1.1\%$ | $4.568$ | $0.0103$ | $0.0824$ | Significant ($q = 0.0103$) |
-| **Train FS $\to$ Test FR** | $+4.2\%$ | $11.611$ | $< 0.0001$ | $< 0.0008$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FS $\to$ Test EFS** | $+3.4\%$ | $7.694$ | $0.0015$ | $0.0120$ | **Significant** ($p < \alpha_{adj}$) |
+| **Train FS $\to$ Test FS** | $+1.1\%$ | $4.568$ | $0.0103$ | $0.0822$ | Significant ($q = 0.0103$) |
+| **Train FS $\to$ Test FR** | $+4.2\%$ | $11.611$ | $0.00031$ | $0.0025$ | **Significant** ($p < \alpha_{adj}$) |
+| **Train FS $\to$ Test EFS** | $+3.4\%$ | $7.694$ | $0.0015$ | $0.0123$ | **Significant** ($p < \alpha_{adj}$) |
 | **Train FS $\to$ Test FE** | $+2.7\%$ | $8.409$ | $0.0011$ | $0.0088$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FR $\to$ Test FS** | $+7.7\%$ | $17.424$ | $< 0.0001$ | $< 0.0008$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FR $\to$ Test FR** | $+2.1\%$ | $7.457$ | $0.0017$ | $0.0136$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FR $\to$ Test EFS** | $+2.3\%$ | $6.358$ | $0.0031$ | $0.0248$ | **Significant** ($p < \alpha_{adj}$) |
-| **Train FR $\to$ Test FE** | $+5.1\%$ | $14.099$ | $< 0.0001$ | $< 0.0008$ | **Significant** ($p < \alpha_{adj}$) |
+| **Train FR $\to$ Test FS** | $+7.7\%$ | $17.424$ | $0.00006$ | $0.0005$ | **Significant** ($p < \alpha_{adj}$) |
+| **Train FR $\to$ Test FR** | $+2.1\%$ | $7.457$ | $0.0017$ | $0.0138$ | **Significant** ($p < \alpha_{adj}$) |
+| **Train FR $\to$ Test EFS** | $+2.3\%$ | $6.358$ | $0.0031$ | $0.0251$ | **Significant** ($p < \alpha_{adj}$) |
+| **Train FR $\to$ Test FE** | $+5.1\%$ | $14.099$ | $0.00015$ | $0.0012$ | **Significant** ($p < \alpha_{adj}$) |
 
 3. **Statistical Assumption Verification:**
    * **Normality:** Shapiro-Wilk tests yielded $W \in [0.892, 0.967]$ with all $p > 0.30$, verifying normality.
-   * **Non-Parametric Confirmation:** Wilcoxon signed-rank tests yielded $W=0, p=0.03125$.
-   * **Conclusion:** All 8 cross-forgery conditions reject the null hypothesis under Benjamini-Hochberg FDR control ($q < 0.05$), and 6 of 8 remain significant under the strict Bonferroni threshold ($\alpha_{adj} = 0.00625$).
+   * **Non-Parametric Confirmation:** Wilcoxon signed-rank tests across the 5 cross-validation folds confirmed positive directional ranks ($W=0$, one-tailed $p=0.03125$, exact two-tailed $p=0.0625$; aggregated across all 40 paired cross-validation evaluations across conditions, $W=0, p < 0.0001$).
+   * **Conclusion:** All 8 cross-forgery conditions reject the null hypothesis under Benjamini-Hochberg FDR control ($q < 0.05$), and **7 of 8** remain significant under the strict Bonferroni threshold ($\alpha_{adj} = 0.00625$).
 
 * **Manuscript Changes:** Section 4.4.3 and Table 9 document the full statistical analysis.
 

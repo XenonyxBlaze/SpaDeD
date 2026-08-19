@@ -130,7 +130,7 @@ In cross-category generalization experiments (Table \ref{tab:cross_forgery}):
 While FS and FR benchmarks consist of temporal video sequences, EFS and FE predominantly consist of static generated images. To maintain architectural consistency without modifying network topology:
 \begin{itemize}
     \item Each static image $I \in \mathbb{R}^{3 \times 256 \times 256}$ is expanded into a temporal sequence of length $T=20$ by replicating the static frame across time: $I_1 = I_2 = \dots = I_T = I$.
-    \item Because the spatial descriptors $x_t$ are invariant across time ($x_t = x$), the BiLSTM recurrent state rapidly reaches a fixed-point embedding ($h_T \approx \phi(x)$). 
+    \item Because the spatial descriptors $x_t$ are invariant across time ($x_t = x$), the recurrent sequence represents a steady-state temporal projection ($h_T \approx \phi(x)$). This enables a uniform model architecture across both static images and video clips without ad-hoc branching.
     \item We emphasize that on static image categories (EFS, FE), the discriminative performance is predominantly driven by Phase 2 (the Texture Enhancement Block and Multi-Attentional Bilinear Pooling), which detects microscopic upsampling noise and local spatial anomalies. On video categories (FS, FR), the LSTM temporal module provides complementary gains by capturing inter-frame dynamics.
 \end{itemize}
 
@@ -199,7 +199,7 @@ The multi-attentional module instantiates $M=4$ parallel attention heads. For ea
 \end{equation}
 where $\sum_{x=1}^H \sum_{y=1}^W A_k(x,y) = 1$.
 
-\textbf{Bilinear Attention Pooling (BAP):} Let $\mathbf{F} \in \mathbb{R}^{C \times (HW)}$ denote the unrolled feature matrix and $\mathbf{A} = [A_1; A_2; \dots; A_M] \in \mathbb{R}^{M \times (HW)}$ denote the stacked attention map matrix. Bilinear Attention Pooling computes the outer-product aggregation:
+\textbf{Bilinear Attention Pooling (BAP):} Following the terminology of \citet{Zhao2021MultiAttentional}, we denote the attention-weighted regional pooling matrix product as Bilinear Attention Pooling (BAP), as it computes the bilinear interaction between the spatial feature representation $\mathbf{F} \in \mathbb{R}^{C \times (HW)}$ and the multi-head spatial attention weight matrix $\mathbf{A} = [A_1; A_2; \dots; A_M] \in \mathbb{R}^{M \times (HW)}$ (distinguished from classical quadratic self-outer-product bilinear feature pooling \citep{Lin2015Bilinear}):
 \begin{equation}
     \mathbf{V} = \mathbf{F} \, \mathbf{A}^T = \big[V_1, V_2, \dots, V_M\big] \in \mathbb{R}^{C \times M},
 \end{equation}

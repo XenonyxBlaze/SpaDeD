@@ -79,7 +79,7 @@ To resolve this issue with complete mathematical rigor, we have reformulated $\m
     \end{equation}
 
     \item \textbf{Formal Matrix Bilinear Attention Pooling:}  
-    Let $\mathbf{F} \in \mathbb{R}^{C \times K}$ denote the unrolled spatial feature matrix ($K = H \times W = 64$) and let $\mathbf{A} = [A_1; A_2; \dots; A_M] \in \mathbb{R}^{M \times K}$ denote the stacked attention weight matrix ($M=4$). Bilinear Attention Pooling is formally computed via matrix multiplication:
+    Let $\mathbf{F} \in \mathbb{R}^{C \times K}$ denote the unrolled spatial feature matrix ($K = H \times W = 64$) and let $\mathbf{A} = [A_1; A_2; \dots; A_M] \in \mathbb{R}^{M \times K}$ denote the stacked attention weight matrix ($M=4$). Following the terminology established by \citet{Zhao2021MultiAttentional}, Bilinear Attention Pooling computes the bilinear matrix interaction between the feature tensor $\mathbf{F}$ and the multi-head spatial attention distribution $\mathbf{A}$:
     \begin{equation}
         \mathbf{V} = \mathbf{F} \, \mathbf{A}^T = \big[V_1, V_2, \dots, V_M\big] \in \mathbb{R}^{C \times M} = \mathbb{R}^{2304 \times 4},
     \end{equation}
@@ -87,10 +87,10 @@ To resolve this issue with complete mathematical rigor, we have reformulated $\m
     \begin{equation}
         V_k = \sum_{x=1}^{H} \sum_{y=1}^{W} A_k(x,y) \cdot F(x,y).
     \end{equation}
-    Each regional vector is unit-normalized: $\hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}$, yielding a parts-based descriptor where each head isolates forensic evidence from distinct spatial regions.
+    Each regional vector is unit-normalized: $\hat{V}_k = \frac{V_k}{\max(\|V_k\|_2, \epsilon)}$, yielding a parts-based descriptor where each head isolates forensic evidence from distinct spatial regions. We have explicitly distinguished this attention-weighted regional pooling from classical quadratic self-outer-product bilinear feature models \citep{Lin2015Bilinear}.
 \end{enumerate}
 
-\paragraph{Manuscript Changes:} Section 3.3.3 (Equations 2--5) and Figure 1 have been revised with the complete matrix formulation and dimensionality flow.
+\paragraph{Manuscript Changes:} Section 3.3.3 (Equations 2--5) and Figure 1 have been revised with the complete matrix formulation, terminology clarification, and dimensionality flow.
 
 \bigskip
 
@@ -170,8 +170,8 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
 \noindent\textbf{Author Response:} We appreciate the Reviewer's insightful observation. We have added \textbf{Section 3.2.4 and Section 4.4.2} to provide both theoretical and empirical justifications:
 
 \begin{enumerate}
-    \item \textbf{Mathematical Frame Replication \& Invariant Fixed-Point Convergence:}  
-    To maintain a unified network topology for both video and static image inputs without heuristic architecture switching, each static image $I$ is expanded into a length-$T=20$ sequence via frame replication: $I_1 = I_2 = \dots = I_T = I$. Because the extracted spatial features are time-invariant ($x_t = x$), the BiLSTM recurrent state rapidly reaches a stable fixed-point representation:
+    \item \textbf{Practical Frame Replication \& Steady-State Projection:}  
+    To maintain a unified network topology for both video and static image inputs without heuristic architecture branching or switching, each static image $I$ is expanded into a length-$T=20$ sequence via frame replication: $I_1 = I_2 = \dots = I_T = I$. Because the extracted spatial features are time-invariant ($x_t = x$), the recurrent sequence represents a steady-state temporal projection:
     \begin{equation}
         h_T = \text{BiLSTM}\big(x, h_{T-1}\big) \approx \phi(x).
     \end{equation}
@@ -184,7 +184,7 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
     \end{itemize}
 \end{enumerate}
 
-\paragraph{Manuscript Changes:} Section 3.2.4 and Section 4.4.2 explicitly document this modality separation and fixed-point analysis.
+\paragraph{Manuscript Changes:} Section 3.2.4 and Section 4.4.2 explicitly document this modality separation and steady-state analysis.
 
 \bigskip
 
@@ -232,14 +232,14 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
 \toprule
 \textbf{Evaluation Condition} & \textbf{Mean Diff ($\Delta$)} & \textbf{$t$-statistic} & \textbf{Raw $p$-value} & \textbf{Bonferroni $p_{adj}$} & \textbf{BH FDR ($q<0.05$)} \\
 \midrule
-\textbf{Train FS $\to$ Test FS} & $+1.1\%$ & $4.568$ & $0.0103$ & $0.0824$ & Significant ($q = 0.0103$) \\
-\textbf{Train FS $\to$ Test FR} & $+4.2\%$ & $11.611$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-\textbf{Train FS $\to$ Test EFS} & $+3.4\%$ & $7.694$ & $0.0015$ & $0.0120$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FS $\to$ Test FS} & $+1.1\%$ & $4.568$ & $0.0103$ & $0.0822$ & Significant ($q = 0.0103$) \\
+\textbf{Train FS $\to$ Test FR} & $+4.2\%$ & $11.611$ & $0.00031$ & $0.0025$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FS $\to$ Test EFS} & $+3.4\%$ & $7.694$ & $0.0015$ & $0.0123$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
 \textbf{Train FS $\to$ Test FE} & $+2.7\%$ & $8.409$ & $0.0011$ & $0.0088$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-\textbf{Train FR $\to$ Test FS} & $+7.7\%$ & $17.424$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-\textbf{Train FR $\to$ Test FR} & $+2.1\%$ & $7.457$ & $0.0017$ & $0.0136$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-\textbf{Train FR $\to$ Test EFS} & $+2.3\%$ & $6.358$ & $0.0031$ & $0.0248$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
-\textbf{Train FR $\to$ Test FE} & $+5.1\%$ & $14.099$ & $< 0.0001$ & $< 0.0008$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FR $\to$ Test FS} & $+7.7\%$ & $17.424$ & $0.00006$ & $0.0005$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FR $\to$ Test FR} & $+2.1\%$ & $7.457$ & $0.0017$ & $0.0138$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FR $\to$ Test EFS} & $+2.3\%$ & $6.358$ & $0.0031$ & $0.0251$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
+\textbf{Train FR $\to$ Test FE} & $+5.1\%$ & $14.099$ & $0.00015$ & $0.0012$ & \textbf{Significant} ($p < \alpha_{adj}$) \\
 \bottomrule
 \end{tabular}
 }
@@ -250,8 +250,8 @@ MLP Classifier & $(B, 512)$ & $(B, 2)$ & Binary logits (Real / Fake) \\
     \item \textbf{Statistical Assumption Verification:}
     \begin{itemize}
         \item \textbf{Normality:} Shapiro-Wilk tests yielded $W \in [0.892, 0.967]$ with all $p > 0.30$, verifying normality.
-        \item \textbf{Non-Parametric Confirmation:} Wilcoxon signed-rank tests yielded $W=0, p=0.03125$.
-        \item \textbf{Conclusion:} All 8 cross-forgery conditions reject the null hypothesis under Benjamini-Hochberg FDR control ($q < 0.05$), and 6 of 8 remain significant under the strict Bonferroni threshold ($\alpha_{adj} = 0.00625$).
+        \item \textbf{Non-Parametric Confirmation:} Wilcoxon signed-rank tests across the 5 cross-validation folds confirmed positive directional ranks ($W=0$, one-tailed $p=0.03125$, exact two-tailed $p=0.0625$; aggregated across all 40 paired cross-validation evaluations across conditions, $W=0, p < 0.0001$).
+        \item \textbf{Conclusion:} All 8 cross-forgery conditions reject the null hypothesis under Benjamini-Hochberg FDR control ($q < 0.05$), and \textbf{7 of 8} remain significant under the strict Bonferroni threshold ($\alpha_{adj} = 0.00625$).
     \end{itemize}
 \end{enumerate}
 

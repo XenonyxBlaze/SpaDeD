@@ -183,7 +183,7 @@ We thank the Reviewer for emphasizing statistical rigor. We have added **Section
 | **Train FS $\to$ Test FE** | $+2.7\%$ | $8.409$ | $0.0011$ | $0.0088$ | **Significant** ($q = 0.0022$) |
 | **Train FR $\to$ Test FS** | $+7.7\%$ | $17.424$ | $0.00006$ | $0.0005$ | **Significant** ($q = 0.0005$) |
 | **Train FR $\to$ Test FR** | $+2.1\%$ | $7.457$ | $0.0017$ | $0.0136$ | **Significant** ($q = 0.0023$) |
-| **Train FR $\to$ Test EFS** | $+2.3\%$ | $6.358$ | $0.0031$ | $0.0248$ | **Significant** ($q = 0.0036$) |
+| **Train FR $\to$ Test EFS** | $+2.3\%$ | $6.358$ | $0.0031$ | $0.0248$ | **Significant** ($q = 0.0035$) |
 | **Train FR $\to$ Test FE** | $+5.1\%$ | $14.099$ | $0.00015$ | $0.0012$ | **Significant** ($q = 0.0006$) |
 
 3. **Statistical Assumption Verification:**
